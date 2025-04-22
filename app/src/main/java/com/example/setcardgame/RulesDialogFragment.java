@@ -1,4 +1,4 @@
-package com.example.setgame;
+package com.example.setcardgame;
 
 import android.app.Dialog;
 import android.os.Bundle;

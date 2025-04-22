@@ -16,11 +16,16 @@ An Android implementation of the classic Set card game with Google Sign-In and F
 1. Clone this repository
 2. Open the project in Android Studio
 3. Create a Firebase project at https://console.firebase.google.com/
-4. Add your application to the Firebase project
-5. Download the `google-services.json` file and replace the placeholder file in the app directory
-6. Enable Google Sign-In in the Firebase Authentication section
-7. Create a Firestore database with appropriate security rules
-8. Build and run the application
+4. Add your application to the Firebase project with package name `com.example.setcardgame`
+5. Generate a debug keystore using the script in `app/keystore/create_debug_keystore_fixed.bat`
+6. Add the SHA-1 fingerprint to your Firebase project settings
+7. Download the `google-services.json` file and replace the placeholder file in the app directory
+8. Enable Google Sign-In in the Firebase Authentication section
+9. Update the Web Client ID in LoginActivity.java with your actual Web Client ID
+10. Create both a Firestore database and Realtime Database with appropriate security rules
+11. Build and run the application
+
+Note: The app requires Android 6.0 (API level 23) or higher
 
 ## Game Rules
 
@@ -42,6 +47,7 @@ Example: Three cards with all different shapes, all different colors, all differ
 - Android SDK
 - Firebase Authentication
 - Firebase Firestore
+- Firebase Realtime Database
 - Google Sign-In API
 - Android Fragments
 

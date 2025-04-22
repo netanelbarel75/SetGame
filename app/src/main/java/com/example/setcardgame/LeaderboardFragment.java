@@ -1,4 +1,4 @@
-package com.example.setgame;
+package com.example.setcardgame;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -15,12 +15,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.example.setcardgame.firebase.FirebaseHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class LeaderboardFragment extends Fragment {
     
@@ -28,7 +27,7 @@ public class LeaderboardFragment extends Fragment {
     private ProgressBar progressBar;
     private Button btnBack;
     
-    private FirebaseFirestore firestore;
+    private FirebaseHelper firebaseHelper;
     private LeaderboardAdapter adapter;
     private List<LeaderboardEntry> leaderboardEntries;
     
@@ -53,8 +52,8 @@ public class LeaderboardFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_leaderboard, container, false);
         
-        // Initialize Firestore
-        firestore = FirebaseFirestore.getInstance();
+        // Initialize Firebase Helper
+        firebaseHelper = FirebaseHelper.getInstance();
         
         // Initialize views
         rvLeaderboard = view.findViewById(R.id.rvLeaderboard);
@@ -83,37 +82,58 @@ public class LeaderboardFragment extends Fragment {
     private void loadLeaderboard() {
         progressBar.setVisibility(View.VISIBLE);
         
-        firestore.collection("scores")
-                .orderBy("score", Query.Direction.DESCENDING)
-                .limit(20) // Get top 20 scores
-                .get()
-                .addOnCompleteListener(task -> {
-                    progressBar.setVisibility(View.GONE);
+        firebaseHelper.getTopScores(new FirebaseHelper.LeaderboardCallback() {
+            @Override
+            public void onSuccess(List<Map<String, Object>> scores) {
+                progressBar.setVisibility(View.GONE);
+                
+                if (isAdded()) {
+                    leaderboardEntries.clear();
                     
-                    if (task.isSuccessful() && isAdded()) {
-                        leaderboardEntries.clear();
+                    int rank = 1;
+                    for (Map<String, Object> scoreData : scores) {
+                        String playerName = (String) scoreData.get("playerName");
+                        Object scoreObj = scoreData.get("score");
+                        Object timeObj = scoreData.get("timeInSeconds");
                         
-                        int rank = 1;
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            String playerName = document.getString("playerName");
-                            Long score = document.getLong("score");
-                            Long timeInSeconds = document.getLong("timeInSeconds");
-                            
-                            if (playerName != null && score != null) {
-                                leaderboardEntries.add(new LeaderboardEntry(
-                                        rank++,
-                                        playerName,
-                                        score.intValue(),
-                                        timeInSeconds != null ? timeInSeconds : 0
-                                ));
-                            }
+                        int score = 0;
+                        long timeInSeconds = 0;
+                        
+                        if (scoreObj instanceof Long) {
+                            score = ((Long) scoreObj).intValue();
+                        } else if (scoreObj instanceof Integer) {
+                            score = (Integer) scoreObj;
                         }
                         
-                        adapter.notifyDataSetChanged();
-                    } else if (isAdded()) {
-                        Toast.makeText(getContext(), R.string.error_loading_leaderboard, Toast.LENGTH_SHORT).show();
+                        if (timeObj instanceof Long) {
+                            timeInSeconds = (Long) timeObj;
+                        } else if (timeObj instanceof Integer) {
+                            timeInSeconds = ((Integer) timeObj).longValue();
+                        }
+                        
+                        if (playerName != null) {
+                            leaderboardEntries.add(new LeaderboardEntry(
+                                    rank++,
+                                    playerName,
+                                    score,
+                                    timeInSeconds
+                            ));
+                        }
                     }
-                });
+                    
+                    adapter.notifyDataSetChanged();
+                }
+            }
+            
+            @Override
+            public void onError(String errorMessage) {
+                progressBar.setVisibility(View.GONE);
+                
+                if (isAdded()) {
+                    Toast.makeText(getContext(), R.string.error_loading_leaderboard, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
     
     @Override

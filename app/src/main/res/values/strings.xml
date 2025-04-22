@@ -33,6 +33,9 @@
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     
+    <!-- Firebase Web Client ID -->
+    <string name="default_web_client_id">312805144245-7rl1ms4ngbfop99api2m3r7s2j4b46na.apps.googleusercontent.com</string>
+    
     <!-- Game Rules Strings -->
     <string name="rules_title">How to Play Set</string>
     <string name="rules_intro">Set is a card game where the goal is to identify valid sets of three cards from the cards laid out on the table.</string>

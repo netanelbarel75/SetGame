@@ -1,4 +1,4 @@
-package com.example.setgame;
+package com.example.setcardgame;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -58,35 +58,42 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_game, container, false);
         
-        // Initialize game model
-        gameModel = new GameModel();
-        
-        // Initialize views
-        rvGameBoard = view.findViewById(R.id.rvGameBoard);
-        tvScore = view.findViewById(R.id.tvScore);
-        tvRemainingCards = view.findViewById(R.id.tvRemainingCards);
-        tvTimer = view.findViewById(R.id.tvTimer);
-        tvMessage = view.findViewById(R.id.tvMessage);
-        btnNewGame = view.findViewById(R.id.btnNewGame);
-        btnHint = view.findViewById(R.id.btnHint);
-        btnAddCards = view.findViewById(R.id.btnAddCards);
-        
-        // Set up RecyclerView
-        int spanCount = 3; // Number of cards per row
-        rvGameBoard.setLayoutManager(new GridLayoutManager(getContext(), spanCount));
-        cardAdapter = new CardAdapter(getContext(), gameModel.getBoard(), gameModel.getSelectedCards(), this);
-        rvGameBoard.setAdapter(cardAdapter);
-        
-        // Set up button listeners
-        btnNewGame.setOnClickListener(v -> startNewGame());
-        btnHint.setOnClickListener(v -> giveHint());
-        btnAddCards.setOnClickListener(v -> addCards());
-        
-        // Set up timer
-        setupTimer();
-        
-        // Start a new game
-        startNewGame();
+        try {
+            // Initialize game model
+            gameModel = new GameModel();
+            
+            // Initialize views
+            rvGameBoard = view.findViewById(R.id.rvGameBoard);
+            tvScore = view.findViewById(R.id.tvScore);
+            tvRemainingCards = view.findViewById(R.id.tvRemainingCards);
+            tvTimer = view.findViewById(R.id.tvTimer);
+            tvMessage = view.findViewById(R.id.tvMessage);
+            btnNewGame = view.findViewById(R.id.btnNewGame);
+            btnHint = view.findViewById(R.id.btnHint);
+            btnAddCards = view.findViewById(R.id.btnAddCards);
+            
+            // Set up RecyclerView
+            int spanCount = 3; // Number of cards per row
+            rvGameBoard.setLayoutManager(new GridLayoutManager(getContext(), spanCount));
+            cardAdapter = new CardAdapter(getContext(), gameModel.getBoard(), gameModel.getSelectedCards(), this);
+            rvGameBoard.setAdapter(cardAdapter);
+            
+            // Set up button listeners
+            btnNewGame.setOnClickListener(v -> startNewGame());
+            btnHint.setOnClickListener(v -> giveHint());
+            btnAddCards.setOnClickListener(v -> addCards());
+            
+            // Set up timer
+            setupTimer();
+            
+            // Start a new game
+            startNewGame();
+        } catch (Exception e) {
+            // Log the error
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Error initializing game: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
         
         return view;
     }
@@ -127,18 +134,48 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     
     private void flashCard(int position) {
         // Implement a visual flash effect for the hint
-        View cardView = rvGameBoard.findViewHolderForAdapterPosition(position).itemView;
+        RecyclerView.ViewHolder viewHolder = rvGameBoard.findViewHolderForAdapterPosition(position);
+        if (viewHolder == null) {
+            // ViewHolder not found, may be outside visible area
+            // Scroll to make it visible
+            rvGameBoard.scrollToPosition(position);
+            // Try again after a short delay
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (isAdded()) {
+                    RecyclerView.ViewHolder vh = rvGameBoard.findViewHolderForAdapterPosition(position);
+                    if (vh != null) {
+                        View selectionHighlight = vh.itemView.findViewById(R.id.vSelection);
+                        if (selectionHighlight != null) {
+                            // Show highlight briefly
+                            selectionHighlight.setVisibility(View.VISIBLE);
+                            
+                            // Hide highlight after delay
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                if (isAdded()) { // Check if fragment is still attached
+                                    selectionHighlight.setVisibility(View.INVISIBLE);
+                                }
+                            }, 500);
+                        }
+                    }
+                }
+            }, 100);
+            return;
+        }
+        
+        View cardView = viewHolder.itemView;
         View selectionHighlight = cardView.findViewById(R.id.vSelection);
         
-        // Show highlight briefly
-        selectionHighlight.setVisibility(View.VISIBLE);
-        
-        // Hide highlight after delay
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (isAdded()) { // Check if fragment is still attached
-                selectionHighlight.setVisibility(View.INVISIBLE);
-            }
-        }, 500);
+        if (selectionHighlight != null) {
+            // Show highlight briefly
+            selectionHighlight.setVisibility(View.VISIBLE);
+            
+            // Hide highlight after delay
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (isAdded()) { // Check if fragment is still attached
+                    selectionHighlight.setVisibility(View.INVISIBLE);
+                }
+            }, 500);
+        }
     }
     
     private void addCards() {
@@ -209,14 +246,16 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     public void onPause() {
         super.onPause();
         // Pause timer when fragment is paused
-        timerHandler.removeCallbacks(timerRunnable);
+        if (timerHandler != null) {
+            timerHandler.removeCallbacks(timerRunnable);
+        }
     }
     
     @Override
     public void onResume() {
         super.onResume();
         // Resume timer when fragment is resumed (if game is not over)
-        if (!gameModel.isGameOver()) {
+        if (timerHandler != null && timerRunnable != null && gameModel != null && !gameModel.isGameOver()) {
             timerHandler.post(timerRunnable);
         }
     }
@@ -224,6 +263,9 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     @Override
     public void onDetach() {
         super.onDetach();
+        if (timerHandler != null) {
+            timerHandler.removeCallbacks(timerRunnable);
+        }
         listener = null;
     }
 }

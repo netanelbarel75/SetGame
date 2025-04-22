@@ -1,4 +1,6 @@
-package com.example.setgame;
+package com.example.setcardgame;
+
+import com.example.setcardgame.Card;
 
 import java.util.ArrayList;
 import java.util.Collections;

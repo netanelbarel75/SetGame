@@ -1,4 +1,4 @@
-package com.example.setgame;
+package com.example.setcardgame;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -54,7 +54,7 @@ public class LoginActivity extends AppCompatActivity {
         
         // Configure Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestIdToken("312805144245-7rl1ms4ngbfop99api2m3r7s2j4b46na.apps.googleusercontent.com") // Replace with actual web client ID from Firebase console
                 .requestEmail()
                 .build();
         

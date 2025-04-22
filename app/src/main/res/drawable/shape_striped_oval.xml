@@ -10,12 +10,31 @@
                 android:color="#FF0000" />
         </shape>
     </item>
-    <!-- In a real implementation, you would create a striped pattern bitmap -->
-    <item android:drawable="@drawable/striped_pattern">
-        <shape android:shape="oval">
-            <size
-                android:width="50dp"
-                android:height="25dp" />
-        </shape>
+    <!-- Striped pattern -->
+    <item>
+        <clip>
+            <shape android:shape="oval">
+                <size
+                    android:width="48dp"
+                    android:height="23dp" />
+                <solid android:color="#FFFFFF" />
+            </shape>
+        </clip>
+    </item>
+    <item>
+        <clip>
+            <shape android:shape="oval">
+                <size
+                    android:width="48dp"
+                    android:height="23dp" />
+                <gradient
+                    android:angle="0"
+                    android:centerColor="#FF0000"
+                    android:endColor="#FF0000"
+                    android:startColor="#FF0000"
+                    android:type="linear"
+                    android:useLevel="false" />
+            </shape>
+        </clip>
     </item>
 </layer-list>

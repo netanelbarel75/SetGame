@@ -1,9 +1,10 @@
-package com.example.setgame;
+package com.example.setcardgame;
 
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -14,9 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
+import com.example.setcardgame.firebase.FirebaseHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -31,7 +32,7 @@ public class ScoreSubmissionDialogFragment extends DialogFragment {
     private int score;
     private long timeInSeconds;
     
-    private FirebaseFirestore firestore;
+    private FirebaseHelper firebaseHelper;
     private FirebaseAuth auth;
     
     public static ScoreSubmissionDialogFragment newInstance(int score, long timeInSeconds) {
@@ -51,7 +52,7 @@ public class ScoreSubmissionDialogFragment extends DialogFragment {
             timeInSeconds = getArguments().getLong(ARG_TIME);
         }
         
-        firestore = FirebaseFirestore.getInstance();
+        firebaseHelper = FirebaseHelper.getInstance();
         auth = FirebaseAuth.getInstance();
     }
     
@@ -106,32 +107,16 @@ public class ScoreSubmissionDialogFragment extends DialogFragment {
     }
     
     private void submitScore(String playerName) {
-        // Create score data
-        Map<String, Object> scoreData = new HashMap<>();
-        scoreData.put("playerName", playerName);
-        scoreData.put("score", score);
-        scoreData.put("timeInSeconds", timeInSeconds);
-        scoreData.put("timestamp", System.currentTimeMillis());
+        // Calculate approximate cards found (for demonstration purposes)
+        int cardsFound = score * 3;  // Each set is 3 cards
         
-        // Add user ID if signed in
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser != null) {
-            scoreData.put("userId", currentUser.getUid());
+        // Use FirebaseHelper to submit score
+        firebaseHelper.submitScore(playerName, score, timeInSeconds, cardsFound);
+        
+        // Show success message
+        if (getContext() != null) {
+            Toast.makeText(getContext(), "Score submitted successfully", Toast.LENGTH_SHORT).show();
         }
-        
-        // Save score to Firestore
-        firestore.collection("scores")
-                .add(scoreData)
-                .addOnSuccessListener(documentReference -> {
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Score submitted successfully", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Failed to submit score: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
     }
     
     @Override
