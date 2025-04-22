@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <vector
+            android:width="100dp"
+            android:height="50dp"
+            android:viewportWidth="100"
+            android:viewportHeight="50">
+            <path
+                android:strokeColor="#0000FF"
+                android:strokeWidth="2"
+                android:pathData="M10,25 C20,5 40,10 50,25 C60,40 80,45 90,25 C80,45 60,50 50,35 C40,20 20,15 10,25 Z" />
+        </vector>
+    </item>
+    <!-- In a real implementation, you would create a striped pattern bitmap -->
+    <item>
+        <clip>
+            <vector
+                android:width="100dp"
+                android:height="50dp"
+                android:viewportWidth="100"
+                android:viewportHeight="50">
+                <path
+                    android:pathData="M10,25 C20,5 40,10 50,25 C60,40 80,45 90,25 C80,45 60,50 50,35 C40,20 20,15 10,25 Z" />
+            </vector>
+        </clip>
+        <bitmap
+            android:src="@drawable/striped_pattern"
+            android:tileMode="repeat" />
+    </item>
+</layer-list>

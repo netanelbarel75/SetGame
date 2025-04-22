@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+    
+    <!-- Set Card Colors -->
+    <color name="colorRed">#F44336</color>
+    <color name="colorGreen">#4CAF50</color>
+    <color name="colorPurple">#9C27B0</color>
+    
+    <!-- App Colors -->
+    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorText">#212121</color>
+</resources>

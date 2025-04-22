@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Set Card Game</string>
+    <string name="app_slogan">Find the patterns, make the sets!</string>
+    <string name="app_credits">Created by Your Name</string>
+    <string name="app_logo">App Logo</string>
+    <string name="play_as_guest">Play as Guest</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="leaderboard">Leaderboard</string>
+    <string name="game_rules">Game Rules</string>
+    <string name="play_game">Play Game</string>
+    <string name="back_to_menu">Back to Menu</string>
+    <string name="new_game">New Game</string>
+    <string name="hint">Hint</string>
+    <string name="add_cards">Add Cards</string>
+    <string name="find_set">Find Set</string>
+    <string name="score">Score: %1$d</string>
+    <string name="cards_remaining">Cards: %1$d</string>
+    <string name="time">Time: %1$s</string>
+    <string name="submit_score">Submit Score</string>
+    <string name="enter_your_name">Enter your name</string>
+    <string name="guest_player">Guest Player</string>
+    <string name="error_loading_leaderboard">Error loading leaderboard</string>
+    <string name="congratulations">Congratulations!</string>
+    <string name="game_over">Game Over</string>
+    <string name="your_score">Your Score: %1$d</string>
+    <string name="your_time">Your Time: %1$s</string>
+    <string name="set_found">Set Found! +1 Point</string>
+    <string name="not_a_set">Not a Set. Try Again!</string>
+    <string name="no_sets_found">No Sets Found. Adding Cards…</string>
+    <string name="deck_empty">Deck Empty</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    
+    <!-- Game Rules Strings -->
+    <string name="rules_title">How to Play Set</string>
+    <string name="rules_intro">Set is a card game where the goal is to identify valid sets of three cards from the cards laid out on the table.</string>
+    <string name="rules_features">Each card has four features:</string>
+    <string name="rules_feature_1">• Shape: oval, diamond, or squiggle</string>
+    <string name="rules_feature_2">• Color: red, green, or purple</string>
+    <string name="rules_feature_3">• Number: one, two, or three</string>
+    <string name="rules_feature_4">• Shading: solid, striped, or outline</string>
+    <string name="rules_set_definition">A valid set consists of three cards where each feature is either all the same or all different across the three cards.</string>
+    <string name="rules_example">Example: Three cards with all different shapes, all different colors, all different numbers, but all the same shading would be a valid set.</string>
+    <string name="rules_gameplay">Tap on cards to select them. When you select three cards, they will automatically be checked to see if they form a set.</string>
+    <string name="rules_buttons">Use the buttons to get hints, add more cards, or start a new game.</string>
+    <string name="rules_scoring">Score is based on the number of sets you find. The faster you find them, the better!</string>
+</resources>

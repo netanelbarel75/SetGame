@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M0,0h108v108h-108z" />
+    
+    <!-- Diamond Shape -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M54,32l15,20l-15,20l-15,-20z" />
+    
+    <!-- Oval Shape -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M30,54a10,6 0,1 0,20 0a10,6 0,1 0,-20 0" />
+    
+    <!-- Squiggle Shape -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M65,48c5,-5 10,-3 15,2c5,5 10,8 15,2c-5,5 -10,8 -15,3c-5,-5 -10,-8 -15,-2" />
+    
+    <!-- Text "SET" -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,77l5,0l0,-2l-13,0l0,2l5,0l0,13l3,0z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,77l10,0l0,-2l-10,0l0,5l8,0l0,2l-8,0l0,6l10,0l0,-2l-7,0l0,-3l7,0l0,-5l-7,0l0,-3l7,0" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,77l5,0l0,-2l-13,0l0,2l5,0l0,13l3,0z" />
+</vector>
