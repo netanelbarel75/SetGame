@@ -4,46 +4,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/headerLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <Button
-            android:id="@+id/btnHomeHeader"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Home"
-            android:textSize="14sp"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <TextView
-            android:id="@+id/tvGameTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Set Card Game"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    android:padding="8dp">
 
     <LinearLayout
         android:id="@+id/gameInfoLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/headerLayout"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -53,7 +21,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Score: 0"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/tvRemainingCards"
@@ -61,7 +30,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Cards: 81"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/tvTimer"
@@ -69,16 +39,27 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Time: 00:00"
-            android:textAlignment="center" />
+            android:textAlignment="center"
+            android:textSize="14sp" />
     </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvGameBoard"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintBottom_toTopOf="@id/controlsLayout"
+        app:layout_constraintTop_toBottomOf="@id/gameInfoLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <LinearLayout
         android:id="@+id/controlsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/gameInfoLayout"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -88,7 +69,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Home"
-            android:layout_marginEnd="4dp" />
+            android:textSize="12sp"
+            android:layout_marginEnd="2dp" />
 
         <Button
             android:id="@+id/btnNewGame"
@@ -96,8 +78,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/new_game"
-            android:layout_marginEnd="4dp"
-            android:layout_marginStart="4dp" />
+            android:textSize="12sp"
+            android:layout_marginHorizontal="2dp" />
 
         <Button
             android:id="@+id/btnHint"
@@ -105,8 +87,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Hint"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp" />
+            android:textSize="12sp"
+            android:layout_marginHorizontal="2dp" />
 
         <Button
             android:id="@+id/btnAddCards"
@@ -114,18 +96,18 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Add Cards"
-            android:layout_marginStart="4dp" />
+            android:textSize="12sp"
+            android:layout_marginStart="2dp" />
     </LinearLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvGameBoard"
-        android:layout_width="match_parent"
+    
+    <!-- The header layout with the home button is now removed -->
+    <Button
+        android:id="@+id/btnHomeHeader"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/controlsLayout"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tvMessage"

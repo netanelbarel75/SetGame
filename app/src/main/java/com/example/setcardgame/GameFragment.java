@@ -78,7 +78,7 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
             btnAddCards = view.findViewById(R.id.btnAddCards);
             
             // Set up RecyclerView
-            int spanCount = 3; // Number of cards per row
+            int spanCount = 4; // 4 cards per row to fit all cards on screen
             rvGameBoard.setLayoutManager(new GridLayoutManager(getContext(), spanCount));
             cardAdapter = new CardAdapter(getContext(), gameModel.getBoard(), gameModel.getSelectedCards(), this);
             rvGameBoard.setAdapter(cardAdapter);
