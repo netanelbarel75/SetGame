@@ -25,11 +25,25 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         void onCardClick(int position);
     }
     
+    private boolean isValidSet = false;
+    private boolean invalidSet = false;
+    
     public CardAdapter(Context context, List<Card> cards, List<Card> selectedCards, OnCardClickListener listener) {
         this.context = context;
         this.cards = cards;
         this.selectedCards = selectedCards;
         this.listener = listener;
+    }
+    
+    public void setValidSet(boolean isValid) {
+        this.isValidSet = isValid;
+        this.invalidSet = !isValid;
+        notifyDataSetChanged();
+    }
+    
+    public void resetSetValidation() {
+        this.isValidSet = false;
+        this.invalidSet = false;
     }
     
     @NonNull
@@ -53,13 +67,17 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
     class CardViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         
         private final View cardBackground;
-        private final ImageView ivCardShape;
+        private final ImageView ivCardShape1;
+        private final ImageView ivCardShape2;
+        private final ImageView ivCardShape3;
         private final View vSelection;
         
         public CardViewHolder(@NonNull View itemView) {
             super(itemView);
             cardBackground = itemView.findViewById(R.id.cardBackground);
-            ivCardShape = itemView.findViewById(R.id.ivCardShape);
+            ivCardShape1 = itemView.findViewById(R.id.ivCardShape1);
+            ivCardShape2 = itemView.findViewById(R.id.ivCardShape2);
+            ivCardShape3 = itemView.findViewById(R.id.ivCardShape3);
             vSelection = itemView.findViewById(R.id.vSelection);
             
             itemView.setOnClickListener(this);
@@ -71,31 +89,87 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             
             // Set selected state
             boolean isSelected = selectedCards.contains(card);
-            vSelection.setVisibility(isSelected ? View.VISIBLE : View.INVISIBLE);
+            
+            if (isSelected) {
+                vSelection.setVisibility(View.VISIBLE);
+                if (selectedCards.size() == 3) {
+                    // If it's the third card and we have a valid/invalid determination
+                    if (isValidSet) {
+                        vSelection.setBackgroundResource(R.drawable.card_valid);
+                    } else if (invalidSet) {
+                        vSelection.setBackgroundResource(R.drawable.card_invalid);
+                    } else {
+                        vSelection.setBackgroundResource(R.drawable.card_selected);
+                    }
+                } else {
+                    vSelection.setBackgroundResource(R.drawable.card_selected);
+                }
+            } else {
+                vSelection.setVisibility(View.INVISIBLE);
+            }
         }
         
         private void setupCardShape(Card card) {
+            // Reset visibility
+            ivCardShape1.setVisibility(View.GONE);
+            ivCardShape2.setVisibility(View.GONE);
+            ivCardShape3.setVisibility(View.GONE);
+            
             // Get the appropriate shape drawable ID based on card properties
             int drawableId = getShapeDrawableId(card);
             
-            // Apply the shape drawable
-            ivCardShape.setImageResource(drawableId);
-            
             // Apply color tint
             int colorId = getColorId(card.getColor());
-            ivCardShape.setColorFilter(ContextCompat.getColor(context, colorId));
+            int colorTint = ContextCompat.getColor(context, colorId);
             
             // Set number of shapes based on card number
-            setNumberOfShapes(card.getNumber());
+            switch (card.getNumber()) {
+                case ONE:
+                    ivCardShape1.setVisibility(View.VISIBLE);
+                    ivCardShape1.setImageResource(drawableId);
+                    ivCardShape1.setColorFilter(colorTint);
+                    break;
+                case TWO:
+                    ivCardShape1.setVisibility(View.VISIBLE);
+                    ivCardShape3.setVisibility(View.VISIBLE);
+                    ivCardShape1.setImageResource(drawableId);
+                    ivCardShape3.setImageResource(drawableId);
+                    ivCardShape1.setColorFilter(colorTint);
+                    ivCardShape3.setColorFilter(colorTint);
+                    break;
+                case THREE:
+                    ivCardShape1.setVisibility(View.VISIBLE);
+                    ivCardShape2.setVisibility(View.VISIBLE);
+                    ivCardShape3.setVisibility(View.VISIBLE);
+                    ivCardShape1.setImageResource(drawableId);
+                    ivCardShape2.setImageResource(drawableId);
+                    ivCardShape3.setImageResource(drawableId);
+                    ivCardShape1.setColorFilter(colorTint);
+                    ivCardShape2.setColorFilter(colorTint);
+                    ivCardShape3.setColorFilter(colorTint);
+                    break;
+            }
+            
+            // Make sure the shapes are properly sized and positioned
+            ivCardShape1.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            ivCardShape2.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            ivCardShape3.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            
+            // Apply padding for better appearance
+            int padding = 8;
+            ivCardShape1.setPadding(padding, padding, padding, padding);
+            ivCardShape2.setPadding(padding, padding, padding, padding);
+            ivCardShape3.setPadding(padding, padding, padding, padding);
         }
         
         private int getShapeDrawableId(Card card) {
             // Determine the drawable ID based on shape and shading
+            // Using the new SET card visuals from the uploaded image
             switch (card.getShape()) {
                 case OVAL:
                     switch (card.getShading()) {
                         case SOLID:
-                            return R.drawable.shape_oval;
+                            return R.drawable.shape_solid_oval;
                         case STRIPED:
                             return R.drawable.shape_striped_oval;
                         case OUTLINE:
@@ -105,7 +179,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
                 case DIAMOND:
                     switch (card.getShading()) {
                         case SOLID:
-                            return R.drawable.shape_diamond;
+                            return R.drawable.shape_solid_diamond;
                         case STRIPED:
                             return R.drawable.shape_striped_diamond;
                         case OUTLINE:
@@ -115,7 +189,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
                 case SQUIGGLE:
                     switch (card.getShading()) {
                         case SOLID:
-                            return R.drawable.shape_squiggle;
+                            return R.drawable.shape_solid_squiggle;
                         case STRIPED:
                             return R.drawable.shape_striped_squiggle;
                         case OUTLINE:
@@ -125,7 +199,7 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             }
             
             // Default fallback
-            return R.drawable.shape_oval;
+            return R.drawable.shape_solid_oval;
         }
         
         private int getColorId(Card.Color color) {
@@ -141,25 +215,12 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             }
         }
         
-        private void setNumberOfShapes(Card.Number number) {
-            // Handle multiple shapes for 2 or 3 cards
-            // For simplicity in this implementation, we're just using a single shape image
-            // In a real app, you'd create a compound drawable with multiple shapes
-            // or use a custom view with multiple ImageViews
-            
-            // This is a placeholder for demonstration
-            switch (number) {
-                case ONE:
-                    ivCardShape.setAlpha(1.0f);
-                    break;
-                case TWO:
-                    ivCardShape.setAlpha(0.9f);
-                    break;
-                case THREE:
-                    ivCardShape.setAlpha(0.8f);
-                    break;
-            }
+        private void applyColorFilter(ImageView imageView, int colorId) {
+            // Apply the color filter to match the SET cards in the image
+            imageView.setColorFilter(ContextCompat.getColor(context, colorId));
         }
+        
+
         
         @Override
         public void onClick(View v) {

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="120dp"
+    android:viewportWidth="240"
+    android:viewportHeight="120">
+    
+    <!-- Background color -->
+    <path
+        android:fillColor="#5c2d91"
+        android:pathData="M0,0h240v120h-240z" />
+    
+    <!-- SET Letters -->
+    <path
+        android:fillColor="#FF0000"
+        android:pathData="M36,30C36,26 40,24 48,24C56,24 64,26 68,28L68,40C64,36 56,34 48,34C44,34 44,36 44,38C44,48 76,42 76,60C76,68 68,72 56,72C48,72 40,70 36,68L36,56C40,60 48,62 56,62C60,62 60,60 60,58C60,48 36,54 36,30Z" />
+    
+    <path
+        android:fillColor="#FF0000"
+        android:pathData="M100,26L84,26L84,40L98,40L98,46L84,46L84,60L100,60L100,66L78,66L78,20L100,20L100,26Z" />
+    
+    <path
+        android:fillColor="#FF0000"
+        android:pathData="M128,66L122,66L122,26L110,26L110,20L140,20L140,26L128,26L128,66Z" />
+    
+    <!-- Card symbols -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M130,95L150,95L150,75L130,75Z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M100,95L120,95L120,75L100,75Z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,95L90,95L90,75L70,75Z" />
+    
+    <!-- Red oval -->
+    <path
+        android:fillColor="#FF0000"
+        android:pathData="M80,85a5,3 0,1,0 10,0a5,3 0,1,0 -10,0Z" />
+    
+    <!-- Green lines -->
+    <path
+        android:strokeColor="#00AA00"
+        android:strokeWidth="2"
+        android:pathData="M105,82h10M105,85h10M105,88h10" />
+    
+    <!-- Purple triangles -->
+    <path
+        android:fillColor="#5c2d91"
+        android:pathData="M135,82l5,-5l5,5h-10zM135,88l5,5l5,-5h-10z" />
+</vector>

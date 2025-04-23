@@ -108,9 +108,58 @@ public class FirebaseHelper {
     }
     
     /**
+     * Add dummy data to the leaderboard if it's empty
+     */
+    private void addDummyDataIfNeeded() {
+        mDatabase.child("leaderboard").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // If there's no data, add some dummy entries
+                if (!dataSnapshot.exists()) {
+                    // Add dummy high scores
+                    addDummyScore("Champion Player", 15, 180, 15);
+                    addDummyScore("Expert Player", 12, 240, 12);
+                    addDummyScore("Advanced Player", 10, 300, 10);
+                    addDummyScore("Intermediate Player", 8, 330, 8);
+                    addDummyScore("Beginner Player", 5, 420, 5);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.w(TAG, "addDummyDataIfNeeded:onCancelled", databaseError.toException());
+            }
+        });
+    }
+    
+    /**
+     * Add a dummy score to the leaderboard
+     */
+    private void addDummyScore(String playerName, int score, long timeInSeconds, int cardsFound) {
+        // Create score data
+        Map<String, Object> scoreData = new HashMap<>();
+        scoreData.put("playerName", playerName);
+        scoreData.put("score", score);
+        scoreData.put("timeInSeconds", timeInSeconds);
+        scoreData.put("cardsFound", cardsFound);
+        scoreData.put("timestamp", System.currentTimeMillis());
+        
+        // Generate a unique key for this score entry
+        String scoreKey = mDatabase.child("leaderboard").push().getKey();
+        
+        if (scoreKey != null) {
+            // Save the score to Firebase
+            mDatabase.child("leaderboard").child(scoreKey).setValue(scoreData);
+        }
+    }
+    
+    /**
      * Get the top scores from the leaderboard
      */
     public void getTopScores(final LeaderboardCallback callback) {
+        // Add some dummy data if no real data exists yet
+        addDummyDataIfNeeded();
+        
         Query query = mDatabase.child("leaderboard")
                 .orderByChild("score")
                 .limitToLast(20); // Get top 20 scores

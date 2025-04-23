@@ -15,7 +15,7 @@
     <string name="hint">Hint</string>
     <string name="add_cards">Add Cards</string>
     <string name="find_set">Find Set</string>
-    <string name="score">Score: %1$d</string>
+    <string name="score">Sets Found: %1$d</string>
     <string name="cards_remaining">Cards: %1$d</string>
     <string name="time">Time: %1$s</string>
     <string name="submit_score">Submit Score</string>

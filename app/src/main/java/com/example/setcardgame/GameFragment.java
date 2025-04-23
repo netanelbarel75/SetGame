@@ -30,6 +30,8 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     private TextView tvRemainingCards;
     private TextView tvTimer;
     private TextView tvMessage;
+    private Button btnHome;
+    private Button btnHomeHeader; // Removed button in header
     private Button btnNewGame;
     private Button btnHint;
     private Button btnAddCards;
@@ -41,6 +43,7 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     
     public interface GameFragmentListener {
         void onGameFinished(int score, long timeInSeconds);
+        void onBackToMenuClicked();
     }
     
     @Override
@@ -68,6 +71,8 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
             tvRemainingCards = view.findViewById(R.id.tvRemainingCards);
             tvTimer = view.findViewById(R.id.tvTimer);
             tvMessage = view.findViewById(R.id.tvMessage);
+            btnHome = view.findViewById(R.id.btnHome);
+            btnHomeHeader = view.findViewById(R.id.btnHomeHeader); // Not used anymore
             btnNewGame = view.findViewById(R.id.btnNewGame);
             btnHint = view.findViewById(R.id.btnHint);
             btnAddCards = view.findViewById(R.id.btnAddCards);
@@ -79,6 +84,11 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
             rvGameBoard.setAdapter(cardAdapter);
             
             // Set up button listeners
+            btnHome.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onBackToMenuClicked();
+                }
+            });
             btnNewGame.setOnClickListener(v -> startNewGame());
             btnHint.setOnClickListener(v -> giveHint());
             btnAddCards.setOnClickListener(v -> addCards());
@@ -191,14 +201,43 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
         gameModel.selectCard(position);
         cardAdapter.notifyDataSetChanged();
         
-        // Check if a set was just processed (selected cards will be cleared in this case)
-        if (gameModel.getSelectedCards().isEmpty()) {
-            updateUI();
+        // If we just selected a third card
+        if (gameModel.getSelectedCards().size() == 3) {
+            // Check if it's a valid set
+            boolean isValidSet = Card.isValidSet(
+                    gameModel.getSelectedCards().get(0),
+                    gameModel.getSelectedCards().get(1),
+                    gameModel.getSelectedCards().get(2)
+            );
             
-            // Check if game is over
-            if (gameModel.isGameOver()) {
-                endGame();
+            // Show appropriate message
+            if (isValidSet) {
+                showMessage(getString(R.string.set_found));
+                // Highlight selected cards in green for valid set
+                cardAdapter.setValidSet(true);
+            } else {
+                showMessage(getString(R.string.not_a_set));
+                // Highlight selected cards in red for invalid set
+                cardAdapter.setValidSet(false);
             }
+            
+            // Make all three cards visibly marked
+            cardAdapter.notifyDataSetChanged();
+            
+            // Delay processing the set to allow user to see the third card selection
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                // Process the set (this will clear the selection)
+                gameModel.processSelectedSet();
+                // Reset the card validation status
+                cardAdapter.resetSetValidation();
+                cardAdapter.notifyDataSetChanged();
+                updateUI();
+                
+                // Check if game is over
+                if (gameModel.isGameOver()) {
+                    endGame();
+                }
+            }, 1500); // 1.5 second delay to see the set clearly
         }
     }
     
@@ -206,10 +245,17 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
         // Update adapter with the current board state
         cardAdapter.notifyDataSetChanged();
         
-        // Update UI elements
+        // Update UI elements with current game state
         tvScore.setText(getString(R.string.score, gameModel.getScore()));
         tvRemainingCards.setText(getString(R.string.cards_remaining, gameModel.getRemainingCards()));
         updateTimerDisplay();
+        
+        // Make sure Home button is visible
+        btnHome.setVisibility(View.VISIBLE);
+        // Hide the header home button as we don't need it
+        if (btnHomeHeader != null) {
+            btnHomeHeader.setVisibility(View.GONE);
+        }
     }
     
     private void updateTimerDisplay() {

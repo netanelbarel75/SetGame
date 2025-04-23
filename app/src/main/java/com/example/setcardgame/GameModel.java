@@ -101,17 +101,32 @@ public class GameModel {
         return false;
     }
     
-    private void processSelectedSet() {
+    public void processSelectedSet() {
+        if (selectedCards.size() != 3) {
+            return;
+        }
+        
         if (isSelectedSetValid()) {
-            // Valid set found
-            score++;
+            // Valid set found - increase score based on sets found
+            score++; // Each set found adds one to the score
             
-            // Remove the selected cards from the board
-            board.removeAll(selectedCards);
+            List<Card> selectedCopy = new ArrayList<>(selectedCards);
             
-            // Deal new cards if board size is less than initial size
-            if (board.size() < INITIAL_BOARD_SIZE) {
-                dealCards(Math.min(selectedCards.size(), deck.size()));
+            // Deal new cards to replace the selected ones
+            if (!deck.isEmpty()) {
+                // For each selected card, replace it in the same position
+                for (Card card : selectedCopy) {
+                    int index = board.indexOf(card);
+                    if (index != -1 && !deck.isEmpty()) {
+                        board.set(index, deck.remove(0));
+                    } else {
+                        // If we can't replace (deck empty), remove the card
+                        board.remove(card);
+                    }
+                }
+            } else {
+                // If deck is empty, just remove the cards
+                board.removeAll(selectedCopy);
             }
             
             // Check if game is over

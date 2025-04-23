@@ -12,7 +12,7 @@ public class Card implements Serializable {
     }
     
     public enum Shape {
-        OVAL, DIAMOND, SQUIGGLE;
+        DIAMOND, OVAL, SQUIGGLE;
         
         public static Shape fromInt(int value) {
             return Shape.values()[value % 3];

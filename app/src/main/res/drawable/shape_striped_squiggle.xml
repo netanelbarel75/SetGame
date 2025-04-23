@@ -1,29 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
-        <vector
-            android:width="100dp"
-            android:height="50dp"
-            android:viewportWidth="100"
-            android:viewportHeight="50">
-            <path
-                android:strokeColor="#0000FF"
-                android:strokeWidth="2"
-                android:pathData="M10,25 C20,5 40,10 50,25 C60,40 80,45 90,25 C80,45 60,50 50,35 C40,20 20,15 10,25 Z" />
-        </vector>
-    </item>
-    <!-- Striped pattern -->
-    <item>
-        <clip>
-            <vector
-                android:width="100dp"
-                android:height="50dp"
-                android:viewportWidth="100"
-                android:viewportHeight="50">
-                <path
-                    android:fillColor="#0000FF"
-                    android:pathData="M10,25 C20,5 40,10 50,25 C60,40 80,45 90,25 C80,45 60,50 50,35 C40,20 20,15 10,25 Z" />
-            </vector>
-        </clip>
-    </item>
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="12dp"
+    android:viewportWidth="24"
+    android:viewportHeight="12">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF0000"
+        android:strokeWidth="1"
+        android:pathData="M3,3.5C3,2 4,1 6,1.5C8,2 13,5 16,4C19,3 21,1 21,2.5C21,4 20,5 18,5.5C15,6.3 10,3 7,4C4,5 3,5 3,3.5Z" />
+    
+    <!-- Vertical stripes that follow the squiggle's curve -->
+    <path
+        android:strokeColor="#FF0000"
+        android:strokeWidth="0.7"
+        android:pathData="M6,2L6,5" />
+    <path
+        android:strokeColor="#FF0000"
+        android:strokeWidth="0.7"
+        android:pathData="M9,1.9L9,5.3" />
+    <path
+        android:strokeColor="#FF0000"
+        android:strokeWidth="0.7"
+        android:pathData="M12,2.5L12,6" />
+    <path
+        android:strokeColor="#FF0000"
+        android:strokeWidth="0.7"
+        android:pathData="M15,2.5L15,5.5" />
+    <path
+        android:strokeColor="#FF0000"
+        android:strokeWidth="0.7"
+        android:pathData="M18,2L18,4.8" />
+</vector>
