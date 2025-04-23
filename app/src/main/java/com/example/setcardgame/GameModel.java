@@ -85,20 +85,29 @@ public class GameModel {
         
         Card card = board.get(position);
         
+        // If card is already selected, deselect it (only if we haven't selected 3 cards yet)
         if (selectedCards.contains(card)) {
-            selectedCards.remove(card);
-            return true;
-        } else if (selectedCards.size() < 3) {
-            selectedCards.add(card);
-            
-            // Check if we have 3 cards selected
-            if (selectedCards.size() == 3) {
-                processSelectedSet();
+            // Only allow deselection if we don't have 3 cards yet (prevent changing while validating)
+            if (selectedCards.size() < 3) {
+                selectedCards.remove(card);
+                return true;
             }
+            return false;
+        } 
+        // Only allow selection of new cards if we haven't reached 3 cards yet
+        else if (selectedCards.size() < 3) {
+            selectedCards.add(card);
             return true;
         }
         
         return false;
+    }
+    
+    /**
+     * Clears the selected cards without processing them
+     */
+    public void clearSelectedCards() {
+        selectedCards.clear();
     }
     
     public void processSelectedSet() {

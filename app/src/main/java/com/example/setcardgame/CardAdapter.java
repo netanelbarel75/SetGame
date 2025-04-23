@@ -91,9 +91,11 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
             boolean isSelected = selectedCards.contains(card);
             
             if (isSelected) {
+                // Always show selection highlight for selected cards
                 vSelection.setVisibility(View.VISIBLE);
+                
+                // Set the appropriate background based on valid/invalid status
                 if (selectedCards.size() == 3) {
-                    // If it's the third card and we have a valid/invalid determination
                     if (isValidSet) {
                         vSelection.setBackgroundResource(R.drawable.card_valid);
                     } else if (invalidSet) {
@@ -102,9 +104,11 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
                         vSelection.setBackgroundResource(R.drawable.card_selected);
                     }
                 } else {
+                    // Regular selection for first two cards
                     vSelection.setBackgroundResource(R.drawable.card_selected);
                 }
             } else {
+                // Not selected, so hide the selection highlight
                 vSelection.setVisibility(View.INVISIBLE);
             }
         }

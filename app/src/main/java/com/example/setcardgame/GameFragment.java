@@ -198,6 +198,12 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     
     @Override
     public void onCardClick(int position) {
+        // If we already have 3 cards selected, ignore additional clicks until processing is complete
+        if (gameModel.getSelectedCards().size() >= 3) {
+            return;
+        }
+        
+        // Add this card to selected cards
         gameModel.selectCard(position);
         cardAdapter.notifyDataSetChanged();
         
@@ -224,20 +230,36 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
             // Make all three cards visibly marked
             cardAdapter.notifyDataSetChanged();
             
-            // Delay processing the set to allow user to see the third card selection
+            // First phase: Show selection for 2 seconds
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                // Process the set (this will clear the selection)
-                gameModel.processSelectedSet();
-                // Reset the card validation status
-                cardAdapter.resetSetValidation();
-                cardAdapter.notifyDataSetChanged();
-                updateUI();
-                
-                // Check if game is over
-                if (gameModel.isGameOver()) {
-                    endGame();
+                // For valid sets, process with a delay to show green highlight longer
+                if (isValidSet) {
+                    // Second phase: Show valid/invalid status for 1 more second
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        // Process the set (this will clear the selection)
+                        gameModel.processSelectedSet();
+                        // Reset the card validation status
+                        cardAdapter.resetSetValidation();
+                        cardAdapter.notifyDataSetChanged();
+                        updateUI();
+                        
+                        // Check if game is over
+                        if (gameModel.isGameOver()) {
+                            endGame();
+                        }
+                    }, 500); // 0.5 second delay to see the valid/invalid status
+                } else {
+                    // For invalid sets, just clear the selection
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        // Just clear the selection for invalid sets
+                        gameModel.clearSelectedCards();
+                        // Reset the card validation status
+                        cardAdapter.resetSetValidation();
+                        cardAdapter.notifyDataSetChanged();
+                        updateUI();
+                    }, 500); // 0.5 second delay to see the invalid status
                 }
-            }, 1500); // 1.5 second delay to see the set clearly
+            }, 1000); // 1 second delay to first see the selection clearly
         }
     }
     
