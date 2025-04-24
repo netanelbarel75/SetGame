@@ -32,6 +32,8 @@
     <string name="deck_empty">Deck Empty</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
+    <string name="end_game">End Game</string>
+    <string name="end_game_confirmation">Are you sure you want to end the game and save your score?</string>
     
     <!-- Firebase Web Client ID -->
     <string name="default_web_client_id">312805144245-7rl1ms4ngbfop99api2m3r7s2j4b46na.apps.googleusercontent.com</string>

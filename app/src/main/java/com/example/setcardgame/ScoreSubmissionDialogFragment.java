@@ -85,7 +85,16 @@ public class ScoreSubmissionDialogFragment extends DialogFragment {
         // Check if user is signed in
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser != null) {
-            etPlayerName.setText(currentUser.getDisplayName());
+            // Use display name if available, otherwise use email
+            String displayName = currentUser.getDisplayName();
+            if (displayName != null && !displayName.isEmpty()) {
+                etPlayerName.setText(displayName);
+            } else if (currentUser.getEmail() != null) {
+                // Use email as player name if no display name
+                etPlayerName.setText(currentUser.getEmail());
+            } else {
+                etPlayerName.setText(R.string.guest_player);
+            }
         } else {
             etPlayerName.setText(R.string.guest_player);
         }
@@ -110,7 +119,7 @@ public class ScoreSubmissionDialogFragment extends DialogFragment {
         // Calculate approximate cards found (for demonstration purposes)
         int cardsFound = score * 3;  // Each set is 3 cards
         
-        // Use FirebaseHelper to submit score
+        // Use a single Firebase implementation to avoid duplicate operations
         firebaseHelper.submitScore(playerName, score, timeInSeconds, cardsFound);
         
         // Show success message

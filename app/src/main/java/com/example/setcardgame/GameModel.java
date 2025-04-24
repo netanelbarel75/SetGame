@@ -232,6 +232,13 @@ public class GameModel {
         return gameOver;
     }
     
+    /**
+     * Manually set the game over state
+     */
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+    }
+    
     public long getElapsedTimeSeconds() {
         return (System.currentTimeMillis() - startTimeMillis) / 1000;
     }

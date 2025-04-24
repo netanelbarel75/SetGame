@@ -5,22 +5,48 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
+
+import com.example.setcardgame.firebase.FirebaseHelper;
 
 public class MainActivity extends AppCompatActivity implements 
         MenuFragment.MenuFragmentListener,
         GameFragment.GameFragmentListener,
         LeaderboardFragment.LeaderboardFragmentListener {
 
+    private static final String TAG = "MainActivity";
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
+        // Ensure leaderboard exists in Firebase when app starts
+        initializeFirebase();
+        
         if (savedInstanceState == null) {
             // Load the menu fragment initially
             loadFragment(new MenuFragment());
         }
+    }
+    
+    /**
+     * Initialize Firebase components
+     */
+    private void initializeFirebase() {
+        Log.d(TAG, "Initializing Firebase components...");
+        // Only use FirebaseHelper for consistency
+        FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
+        
+        // Create leaderboard table if it doesn't exist - but do it in a background thread
+        new Thread(() -> {
+            try {
+                firebaseHelper.ensureLeaderboardExists();
+            } catch (Exception e) {
+                Log.e(TAG, "Error initializing Firebase leaderboard", e);
+            }
+        }).start();
     }
     
     private void loadFragment(Fragment fragment) {

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.setcardgame.firebase.FirebaseHelper;
+import com.example.setcardgame.FirebaseManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ public class LeaderboardFragment extends Fragment {
     private FirebaseHelper firebaseHelper;
     private LeaderboardAdapter adapter;
     private List<LeaderboardEntry> leaderboardEntries;
+    private boolean isLoadingData = false;
     
     private LeaderboardFragmentListener listener;
     
@@ -52,7 +54,7 @@ public class LeaderboardFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_leaderboard, container, false);
         
-        // Initialize Firebase Helper
+        // Initialize Firebase Helper - only use one implementation
         firebaseHelper = FirebaseHelper.getInstance();
         
         // Initialize views
@@ -80,12 +82,20 @@ public class LeaderboardFragment extends Fragment {
     }
     
     private void loadLeaderboard() {
+        // Prevent multiple simultaneous loading attempts
+        if (isLoadingData) {
+            return;
+        }
+        
+        isLoadingData = true;
         progressBar.setVisibility(View.VISIBLE);
         
+        // Only use FirebaseHelper for consistency
         firebaseHelper.getTopScores(new FirebaseHelper.LeaderboardCallback() {
             @Override
             public void onSuccess(List<Map<String, Object>> scores) {
                 progressBar.setVisibility(View.GONE);
+                isLoadingData = false;
                 
                 if (isAdded()) {
                     leaderboardEntries.clear();
@@ -128,6 +138,7 @@ public class LeaderboardFragment extends Fragment {
             @Override
             public void onError(String errorMessage) {
                 progressBar.setVisibility(View.GONE);
+                isLoadingData = false;
                 
                 if (isAdded()) {
                     Toast.makeText(getContext(), R.string.error_loading_leaderboard, Toast.LENGTH_SHORT).show();

@@ -46,6 +46,14 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.CardViewHolder
         this.invalidSet = false;
     }
     
+    /**
+     * Get whether the current selection is a valid set
+     * @return true if the current selection is a valid set
+     */
+    public boolean getIsValidSet() {
+        return isValidSet;
+    }
+    
     @NonNull
     @Override
     public CardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

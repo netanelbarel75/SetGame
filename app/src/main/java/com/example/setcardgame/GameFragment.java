@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class GameFragment extends Fragment implements CardAdapter.OnCardClickListener {
+    private static final String TAG = "GameFragment";
     
     private GameModel gameModel;
     private RecyclerView rvGameBoard;
@@ -35,9 +37,12 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     private Button btnNewGame;
     private Button btnHint;
     private Button btnAddCards;
+    private Button btnEndGame;
     
     private Handler timerHandler;
     private Runnable timerRunnable;
+    
+    private boolean isProcessingCards = false;
     
     private GameFragmentListener listener;
     
@@ -76,6 +81,8 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
             btnNewGame = view.findViewById(R.id.btnNewGame);
             btnHint = view.findViewById(R.id.btnHint);
             btnAddCards = view.findViewById(R.id.btnAddCards);
+            btnEndGame = view.findViewById(R.id.btnEndGame);
+            btnEndGame.setText(getString(R.string.end_game));
             
             // Set up RecyclerView
             int spanCount = 4; // 4 cards per row to fit all cards on screen
@@ -92,6 +99,7 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
             btnNewGame.setOnClickListener(v -> startNewGame());
             btnHint.setOnClickListener(v -> giveHint());
             btnAddCards.setOnClickListener(v -> addCards());
+            btnEndGame.setOnClickListener(v -> endGameManually());
             
             // Set up timer
             setupTimer();
@@ -198,68 +206,98 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
     
     @Override
     public void onCardClick(int position) {
-        // If we already have 3 cards selected, ignore additional clicks until processing is complete
-        if (gameModel.getSelectedCards().size() >= 3) {
+        // If we already have 3 cards selected or are processing cards, ignore additional clicks
+        if (gameModel.getSelectedCards().size() >= 3 || isProcessingCards) {
             return;
         }
         
-        // Add this card to selected cards
-        gameModel.selectCard(position);
-        cardAdapter.notifyDataSetChanged();
-        
-        // If we just selected a third card
-        if (gameModel.getSelectedCards().size() == 3) {
-            // Check if it's a valid set
-            boolean isValidSet = Card.isValidSet(
-                    gameModel.getSelectedCards().get(0),
-                    gameModel.getSelectedCards().get(1),
-                    gameModel.getSelectedCards().get(2)
-            );
-            
-            // Show appropriate message
-            if (isValidSet) {
-                showMessage(getString(R.string.set_found));
-                // Highlight selected cards in green for valid set
-                cardAdapter.setValidSet(true);
-            } else {
-                showMessage(getString(R.string.not_a_set));
-                // Highlight selected cards in red for invalid set
-                cardAdapter.setValidSet(false);
-            }
-            
-            // Make all three cards visibly marked
+        try {
+            // Add this card to selected cards
+            gameModel.selectCard(position);
             cardAdapter.notifyDataSetChanged();
             
-            // First phase: Show selection for 2 seconds
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                // For valid sets, process with a delay to show green highlight longer
+            // If we just selected a third card
+            if (gameModel.getSelectedCards().size() == 3) {
+                // Set processing flag to prevent additional clicks during validation
+                isProcessingCards = true;
+                
+                // Check if it's a valid set
+                boolean isValidSet = Card.isValidSet(
+                        gameModel.getSelectedCards().get(0),
+                        gameModel.getSelectedCards().get(1),
+                        gameModel.getSelectedCards().get(2)
+                );
+                
+                // Show appropriate message
                 if (isValidSet) {
-                    // Second phase: Show valid/invalid status for 1 more second
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        // Process the set (this will clear the selection)
-                        gameModel.processSelectedSet();
-                        // Reset the card validation status
-                        cardAdapter.resetSetValidation();
-                        cardAdapter.notifyDataSetChanged();
-                        updateUI();
-                        
-                        // Check if game is over
-                        if (gameModel.isGameOver()) {
-                            endGame();
-                        }
-                    }, 500); // 0.5 second delay to see the valid/invalid status
+                    showMessage(getString(R.string.set_found));
+                    // Highlight selected cards in green for valid set
+                    cardAdapter.setValidSet(true);
                 } else {
-                    // For invalid sets, just clear the selection
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        // Just clear the selection for invalid sets
-                        gameModel.clearSelectedCards();
-                        // Reset the card validation status
-                        cardAdapter.resetSetValidation();
-                        cardAdapter.notifyDataSetChanged();
-                        updateUI();
-                    }, 500); // 0.5 second delay to see the invalid status
+                    showMessage(getString(R.string.not_a_set));
+                    // Highlight selected cards in red for invalid set
+                    cardAdapter.setValidSet(false);
                 }
-            }, 1000); // 1 second delay to first see the selection clearly
+                
+                // Make all three cards visibly marked
+                cardAdapter.notifyDataSetChanged();
+                
+                // Use shorter delay for better responsiveness
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    try {
+                        // For valid sets, process with a delay to show highlight longer
+                        // Use the getter method to check if it's a valid set from the adapter
+                        if (cardAdapter.getIsValidSet()) {
+                            // Use shorter delay for better responsiveness
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                try {
+                                    // Process the set (this will clear the selection)
+                                    gameModel.processSelectedSet();
+                                    // Reset the card validation status
+                                    cardAdapter.resetSetValidation();
+                                    cardAdapter.notifyDataSetChanged();
+                                    updateUI();
+                                    
+                                    // Reset processing flag
+                                    isProcessingCards = false;
+                                    
+                                    // Check if game is over
+                                    if (gameModel.isGameOver()) {
+                                        endGame();
+                                    }
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Error processing valid set", e);
+                                    isProcessingCards = false;
+                                }
+                            }, 500); // 0.5 second delay to see the valid/invalid status
+                        } else {
+                            // For invalid sets, just clear the selection
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                try {
+                                    // Just clear the selection for invalid sets
+                                    gameModel.clearSelectedCards();
+                                    // Reset the card validation status
+                                    cardAdapter.resetSetValidation();
+                                    cardAdapter.notifyDataSetChanged();
+                                    updateUI();
+                                    
+                                    // Reset processing flag
+                                    isProcessingCards = false;
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Error processing invalid set", e);
+                                    isProcessingCards = false;
+                                }
+                            }, 500); // 0.5 second delay to see the invalid status
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error in delayed processing", e);
+                        isProcessingCards = false;
+                    }
+                }, 500); // Reduced delay for better responsiveness
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error selecting card", e);
+            isProcessingCards = false;
         }
     }
     
@@ -308,6 +346,38 @@ public class GameFragment extends Fragment implements CardAdapter.OnCardClickLis
         if (listener != null) {
             listener.onGameFinished(gameModel.getScore(), gameModel.getElapsedTimeSeconds());
         }
+    }
+    
+    /**
+     * End the game manually when the user clicks the End Game button
+     */
+    private void endGameManually() {
+        // Set game over flag in the model
+        gameModel.setGameOver(true);
+        
+        // Stop the timer
+        if (timerHandler != null) {
+            timerHandler.removeCallbacks(timerRunnable);
+        }
+        
+        // Show confirmation dialog before ending
+        new android.app.AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.end_game))
+            .setMessage(getString(R.string.end_game_confirmation))
+            .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                // End the game and submit score
+                endGame();
+            })
+            .setNegativeButton(android.R.string.no, (dialog, which) -> {
+                // Continue the game
+                gameModel.setGameOver(false);
+                // Restart timer
+                if (timerHandler != null && timerRunnable != null) {
+                    timerHandler.post(timerRunnable);
+                }
+            })
+            .setCancelable(false)
+            .show();
     }
     
     @Override

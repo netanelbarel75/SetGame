@@ -58,46 +58,60 @@
         android:id="@+id/controlsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <Button
-            android:id="@+id/btnHome"
-            android:layout_width="0dp"
+            android:id="@+id/btnEndGame"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Home"
-            android:textSize="12sp"
-            android:layout_marginEnd="2dp" />
+            android:text="End Game"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
 
-        <Button
-            android:id="@+id/btnNewGame"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/new_game"
-            android:textSize="12sp"
-            android:layout_marginHorizontal="2dp" />
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnHint"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Hint"
-            android:textSize="12sp"
-            android:layout_marginHorizontal="2dp" />
+            <Button
+                android:id="@+id/btnHome"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Home"
+                android:textSize="12sp"
+                android:layout_marginEnd="2dp" />
 
-        <Button
-            android:id="@+id/btnAddCards"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Add Cards"
-            android:textSize="12sp"
-            android:layout_marginStart="2dp" />
+            <Button
+                android:id="@+id/btnNewGame"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/new_game"
+                android:textSize="12sp"
+                android:layout_marginHorizontal="2dp" />
+
+            <Button
+                android:id="@+id/btnHint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Hint"
+                android:textSize="12sp"
+                android:layout_marginHorizontal="2dp" />
+
+            <Button
+                android:id="@+id/btnAddCards"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Add Cards"
+                android:textSize="12sp"
+                android:layout_marginStart="2dp" />
+        </LinearLayout>
     </LinearLayout>
     
     <!-- The header layout with the home button is now removed -->
