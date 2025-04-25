@@ -39,6 +39,9 @@ public class MainActivity extends AppCompatActivity implements
         // Only use FirebaseHelper for consistency
         FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
         
+        // Debug Firebase connection
+        firebaseHelper.debugDatabaseConnection();
+        
         // Create leaderboard table if it doesn't exist - but do it in a background thread
         new Thread(() -> {
             try {

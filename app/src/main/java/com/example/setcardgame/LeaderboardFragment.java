@@ -2,6 +2,7 @@ package com.example.setcardgame;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -90,12 +91,16 @@ public class LeaderboardFragment extends Fragment {
         isLoadingData = true;
         progressBar.setVisibility(View.VISIBLE);
         
+        Log.d("LeaderboardFragment", "Loading leaderboard data...");
+        
         // Only use FirebaseHelper for consistency
         firebaseHelper.getTopScores(new FirebaseHelper.LeaderboardCallback() {
             @Override
             public void onSuccess(List<Map<String, Object>> scores) {
                 progressBar.setVisibility(View.GONE);
                 isLoadingData = false;
+                
+                Log.d("LeaderboardFragment", "Leaderboard data received: " + scores.size() + " entries");
                 
                 if (isAdded()) {
                     leaderboardEntries.clear();
@@ -139,6 +144,8 @@ public class LeaderboardFragment extends Fragment {
             public void onError(String errorMessage) {
                 progressBar.setVisibility(View.GONE);
                 isLoadingData = false;
+                
+                Log.e("LeaderboardFragment", "Error loading leaderboard: " + errorMessage);
                 
                 if (isAdded()) {
                     Toast.makeText(getContext(), R.string.error_loading_leaderboard, Toast.LENGTH_SHORT).show();

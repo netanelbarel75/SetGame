@@ -103,6 +103,107 @@ public class FirebaseHelper {
     }
     
     /**
+     * Debug method to check Firebase database connection
+     */
+    public void debugDatabaseConnection() {
+        Log.d(TAG, "Checking database connection...");
+        try {
+            // Get the database URL
+            String databaseUrl = FirebaseDatabase.getInstance().getReference().toString();
+            Log.d(TAG, "Database URL: " + databaseUrl);
+            
+            // Force create the leaderboard node if it doesn't exist
+            createLeaderboardIfNotExists();
+            
+            // Check if leaderboard exists
+            mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "Leaderboard exists: " + dataSnapshot.exists());
+                    Log.d(TAG, "Leaderboard has children: " + dataSnapshot.hasChildren());
+                    if (dataSnapshot.exists()) {
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            Log.d(TAG, "Child key: " + child.getKey());
+                            try {
+                                Log.d(TAG, "Child value: " + child.getValue());
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error getting child value", e);
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "Creating leaderboard manually...");
+                        // Create the leaderboard node and add test data
+                        mDatabase.child("leaderboard").setValue(new HashMap<>())
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Created leaderboard node successfully");
+                                addTestData();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to create leaderboard node", e);
+                            });
+                    }
+                }
+                
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e(TAG, "Database error: " + error.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking database", e);
+        }
+    }
+    
+    /**
+     * Force create the leaderboard node if it doesn't exist
+     */
+    private void createLeaderboardIfNotExists() {
+        try {
+            // Direct attempt to create the leaderboard node
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("leaderboard", new HashMap<>());
+            mDatabase.updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Leaderboard node created or updated");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to create leaderboard node", e);
+                });
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating leaderboard node", e);
+        }
+    }
+    
+    /**
+     * Add test data to the leaderboard
+     */
+    private void addTestData() {
+        try {
+            // Generate a unique key for this score entry
+            String scoreKey = mDatabase.child("leaderboard").push().getKey();
+            
+            if (scoreKey != null) {
+                Map<String, Object> testData = new HashMap<>();
+                testData.put("playerName", "Test Player");
+                testData.put("score", 10);
+                testData.put("timeInSeconds", 300);
+                testData.put("cardsFound", 10);
+                testData.put("timestamp", System.currentTimeMillis());
+                
+                mDatabase.child("leaderboard").child(scoreKey).setValue(testData)
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Added test data successfully");
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to add test data", e);
+                    });
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding test data", e);
+        }
+    }
+    
+    /**
      * Get the current authenticated user
      */
     public FirebaseUser getCurrentUser() {
@@ -285,6 +386,11 @@ public class FirebaseHelper {
      */
     public void getTopScores(final LeaderboardCallback callback) {
         try {
+            Log.d(TAG, "Starting to fetch top scores");
+            
+            // Debug the database reference
+            Log.d(TAG, "Database reference: " + mDatabase.toString());
+            
             // Create leaderboard node if it doesn't exist - call this immediately on app startup
             ensureLeaderboardExists();
             // Add some dummy data if no real data exists yet
@@ -295,31 +401,37 @@ public class FirebaseHelper {
                     .limitToLast(20); // Get top 20 scores
                     
             query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<Map<String, Object>> scores = new ArrayList<>();
-                
-                // Process the scores in reverse order (highest first)
-                for (DataSnapshot scoreSnapshot : dataSnapshot.getChildren()) {
-                    Map<String, Object> score = new HashMap<>();
-                    score.put("id", scoreSnapshot.getKey());
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "Leaderboard data received, exists: " + dataSnapshot.exists());
+                    Log.d(TAG, "Leaderboard child count: " + dataSnapshot.getChildrenCount());
                     
-                    for (DataSnapshot child : scoreSnapshot.getChildren()) {
-                        score.put(child.getKey(), child.getValue());
+                    List<Map<String, Object>> scores = new ArrayList<>();
+                    
+                    // Process the scores in reverse order (highest first)
+                    for (DataSnapshot scoreSnapshot : dataSnapshot.getChildren()) {
+                        Log.d(TAG, "Processing score with key: " + scoreSnapshot.getKey());
+                        
+                        Map<String, Object> score = new HashMap<>();
+                        score.put("id", scoreSnapshot.getKey());
+                        
+                        for (DataSnapshot child : scoreSnapshot.getChildren()) {
+                            score.put(child.getKey(), child.getValue());
+                        }
+                        
+                        scores.add(0, score); // Add to beginning to reverse order
                     }
                     
-                    scores.add(0, score); // Add to beginning to reverse order
+                    Log.d(TAG, "Processed " + scores.size() + " scores");
+                    callback.onSuccess(scores);
                 }
                 
-                callback.onSuccess(scores);
-            }
-            
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.w(TAG, "getTopScores:onCancelled", databaseError.toException());
-                callback.onError(databaseError.getMessage());
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.w(TAG, "getTopScores:onCancelled", databaseError.toException());
+                    callback.onError(databaseError.getMessage());
+                }
+            });
         } catch (Exception e) {
             Log.e(TAG, "Error getting top scores", e);
             callback.onError("Failed to load leaderboard: " + e.getMessage());
