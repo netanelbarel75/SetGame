@@ -39,15 +39,13 @@ public class MainActivity extends AppCompatActivity implements
         // Only use FirebaseHelper for consistency
         FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
         
-        // Debug Firebase connection
-        firebaseHelper.debugDatabaseConnection();
-        
-        // Create leaderboard table if it doesn't exist - but do it in a background thread
+        // Just check the database connection, don't create any data
         new Thread(() -> {
             try {
-                firebaseHelper.ensureLeaderboardExists();
+                // Only debug the connection - don't modify data
+                firebaseHelper.debugDatabaseConnection();
             } catch (Exception e) {
-                Log.e(TAG, "Error initializing Firebase leaderboard", e);
+                Log.e(TAG, "Error connecting to Firebase", e);
             }
         }).start();
     }

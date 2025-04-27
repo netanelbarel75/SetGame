@@ -1,7 +1,11 @@
 package com.example.setcardgame;
 
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +30,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +52,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         
+        // Debug: Print the SHA-1 hash to help with debugging Google Sign-In issues
+        printKeyHash();
+        
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
         
@@ -54,7 +63,7 @@ public class LoginActivity extends AppCompatActivity {
         
         // Configure Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("312805144245-7rl1ms4ngbfop99api2m3r7s2j4b46na.apps.googleusercontent.com") // Replace with actual web client ID from Firebase console
+                .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         
@@ -67,6 +76,25 @@ public class LoginActivity extends AppCompatActivity {
         
         btnPlayAsGuest = findViewById(R.id.btnPlayAsGuest);
         btnPlayAsGuest.setOnClickListener(v -> playAsGuest());
+    }
+    
+    /**
+     * Prints the SHA-1 fingerprint of the app's signing certificate to help with Google Sign-In debugging
+     */
+    private void printKeyHash() {
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(
+                    getPackageName(),
+                    PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                String keyHash = Base64.encodeToString(md.digest(), Base64.DEFAULT);
+                Log.d(TAG, "KeyHash: " + keyHash);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting key hash", e);
+        }
     }
     
     @Override
@@ -105,7 +133,27 @@ public class LoginActivity extends AppCompatActivity {
             } catch (ApiException e) {
                 // Google Sign In failed
                 Log.w(TAG, "Google sign in failed", e);
-                Toast.makeText(this, "Google sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                
+                // Provide more helpful error messages based on error code
+                String errorMessage;
+                switch (e.getStatusCode()) {
+                    case 10: // DEVELOPER_ERROR
+                        errorMessage = "Sign-in configuration error. Please contact app developer.";
+                        break;
+                    case 12500: // SIGN_IN_CANCELLED
+                        errorMessage = "Sign-in was cancelled.";
+                        break;
+                    case 12501: // SIGN_IN_FAILED
+                        errorMessage = "Sign-in failed. Please try again.";
+                        break;
+                    case 12502: // SIGN_IN_CURRENTLY_IN_PROGRESS
+                        errorMessage = "Sign-in already in progress.";
+                        break;
+                    default:
+                        errorMessage = "Google sign-in failed: " + e.getMessage();
+                }
+                
+                Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
             }
         }
     }

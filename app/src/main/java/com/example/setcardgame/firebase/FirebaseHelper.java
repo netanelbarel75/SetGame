@@ -112,35 +112,30 @@ public class FirebaseHelper {
             String databaseUrl = FirebaseDatabase.getInstance().getReference().toString();
             Log.d(TAG, "Database URL: " + databaseUrl);
             
-            // Force create the leaderboard node if it doesn't exist
-            createLeaderboardIfNotExists();
-            
-            // Check if leaderboard exists
+            // Check if leaderboard exists - but don't create it
             mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     Log.d(TAG, "Leaderboard exists: " + dataSnapshot.exists());
-                    Log.d(TAG, "Leaderboard has children: " + dataSnapshot.hasChildren());
                     if (dataSnapshot.exists()) {
+                        Log.d(TAG, "Leaderboard has children: " + dataSnapshot.hasChildren());
+                        long childCount = 0;
+                        
                         for (DataSnapshot child : dataSnapshot.getChildren()) {
-                            Log.d(TAG, "Child key: " + child.getKey());
-                            try {
-                                Log.d(TAG, "Child value: " + child.getValue());
-                            } catch (Exception e) {
-                                Log.e(TAG, "Error getting child value", e);
+                            childCount++;
+                            if (childCount <= 3) { // Only log the first 3 to avoid excessive logging
+                                Log.d(TAG, "Child key: " + child.getKey());
+                                try {
+                                    Log.d(TAG, "Sample value: " + child.getValue());
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Error getting child value", e);
+                                }
                             }
                         }
+                        Log.d(TAG, "Total number of leaderboard entries: " + childCount);
                     } else {
-                        Log.d(TAG, "Creating leaderboard manually...");
-                        // Create the leaderboard node and add test data
-                        mDatabase.child("leaderboard").setValue(new HashMap<>())
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Created leaderboard node successfully");
-                                addTestData();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to create leaderboard node", e);
-                            });
+                        Log.d(TAG, "Leaderboard doesn't exist yet. It will be created when needed.");
+                        // We no longer create it here - this is just for debugging
                     }
                 }
                 
@@ -159,16 +154,30 @@ public class FirebaseHelper {
      */
     private void createLeaderboardIfNotExists() {
         try {
-            // Direct attempt to create the leaderboard node
-            Map<String, Object> updates = new HashMap<>();
-            updates.put("leaderboard", new HashMap<>());
-            mDatabase.updateChildren(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Leaderboard node created or updated");
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to create leaderboard node", e);
-                });
+            // First check if the leaderboard exists before attempting to create it
+            mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (!dataSnapshot.exists()) {
+                        // Only create if it doesn't exist
+                        Log.d(TAG, "Leaderboard doesn't exist, creating it");
+                        mDatabase.child("leaderboard").setValue(new HashMap<>())
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Leaderboard node created");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to create leaderboard node", e);
+                            });
+                    } else {
+                        Log.d(TAG, "Leaderboard already exists, preserving data");
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e(TAG, "Error checking leaderboard existence", error.toException());
+                }
+            });
         } catch (Exception e) {
             Log.e(TAG, "Error creating leaderboard node", e);
         }
@@ -295,36 +304,38 @@ public class FirebaseHelper {
         
         try {
             mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (!dataSnapshot.exists()) {
-                    Log.d(TAG, "Leaderboard does not exist. Creating it now...");
-                    // Create the leaderboard node with an initial empty object
-                    mDatabase.child("leaderboard").setValue(new HashMap<>())
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d(TAG, "Created leaderboard node in Firebase successfully");
-                            // After creating the leaderboard node, add dummy data
-                            addDummyDataIfNeeded();
-                            isInitialized = true;
-                            isInitializing = false;
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e(TAG, "Failed to create leaderboard node", e);
-                            isInitializing = false;
-                        });
-                } else {
-                    Log.d(TAG, "Leaderboard already exists in Firebase");
-                    isInitialized = true;
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (!dataSnapshot.exists()) {
+                        Log.d(TAG, "Leaderboard does not exist. Creating it now...");
+                        // Create the leaderboard node with an initial empty object
+                        mDatabase.child("leaderboard").setValue(new HashMap<>())
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Created leaderboard node in Firebase successfully");
+                                // Add dummy data ONLY if there is none
+                                addDummyDataIfNeeded();
+                                isInitialized = true;
+                                isInitializing = false;
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to create leaderboard node", e);
+                                isInitializing = false;
+                            });
+                    } else {
+                        // Leaderboard already exists - DO NOT modify it
+                        Log.d(TAG, "Leaderboard already exists in Firebase with " + 
+                              dataSnapshot.getChildrenCount() + " entries");
+                        isInitialized = true;
+                        isInitializing = false;
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.w(TAG, "ensureLeaderboardExists:onCancelled", databaseError.toException());
                     isInitializing = false;
                 }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.w(TAG, "ensureLeaderboardExists:onCancelled", databaseError.toException());
-                isInitializing = false;
-            }
-        });
+            });
         } catch (Exception e) {
             Log.e(TAG, "Error checking for leaderboard", e);
             isInitializing = false;
@@ -333,28 +344,33 @@ public class FirebaseHelper {
 
     /**
      * Add dummy data to the leaderboard if it's empty
+     * This should only be called when creating a new leaderboard
      */
     private void addDummyDataIfNeeded() {
         try {
-            mDatabase.child("leaderboard").limitToFirst(1).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // If there's no data, add some dummy entries
-                if (!dataSnapshot.exists()) {
-                    // Add dummy high scores
-                    addDummyScore("Champion Player", 15, 180, 15);
-                    addDummyScore("Expert Player", 12, 240, 12);
-                    addDummyScore("Advanced Player", 10, 300, 10);
-                    addDummyScore("Intermediate Player", 8, 330, 8);
-                    addDummyScore("Beginner Player", 5, 420, 5);
+            mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    // Only add dummy data if the leaderboard is completely empty
+                    if (!dataSnapshot.exists() || !dataSnapshot.hasChildren()) {
+                        Log.d(TAG, "Adding initial dummy data to empty leaderboard");
+                        // Add dummy high scores
+                        addDummyScore("Champion Player", 15, 180, 15);
+                        addDummyScore("Expert Player", 12, 240, 12);
+                        addDummyScore("Advanced Player", 10, 300, 10);
+                        addDummyScore("Intermediate Player", 8, 330, 8);
+                        addDummyScore("Beginner Player", 5, 420, 5);
+                    } else {
+                        Log.d(TAG, "Leaderboard already has " + dataSnapshot.getChildrenCount() + 
+                                  " entries, not adding dummy data");
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.w(TAG, "addDummyDataIfNeeded:onCancelled", databaseError.toException());
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.w(TAG, "addDummyDataIfNeeded:onCancelled", databaseError.toException());
+                }
+            });
         } catch (Exception e) {
             Log.e(TAG, "Error adding dummy data", e);
         }
@@ -391,10 +407,10 @@ public class FirebaseHelper {
             // Debug the database reference
             Log.d(TAG, "Database reference: " + mDatabase.toString());
             
-            // Create leaderboard node if it doesn't exist - call this immediately on app startup
-            ensureLeaderboardExists();
-            // Add some dummy data if no real data exists yet
-            addDummyDataIfNeeded();
+            // Only check if leaderboard exists - don't modify existing data
+            if (!isInitialized) {
+                ensureLeaderboardExists();
+            }
             
             Query query = mDatabase.child("leaderboard")
                     .orderByChild("score")
