@@ -39,6 +39,9 @@ public class MainActivity extends AppCompatActivity implements
         // Only use FirebaseHelper for consistency
         FirebaseHelper firebaseHelper = FirebaseHelper.getInstance();
         
+        // Set the context for SharedPreferences access
+        firebaseHelper.setContext(getApplicationContext());
+        
         // Just check the database connection, don't create any data
         new Thread(() -> {
             try {

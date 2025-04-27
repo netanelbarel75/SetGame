@@ -53,6 +53,8 @@ public class ScoreSubmissionDialogFragment extends DialogFragment {
         }
         
         firebaseHelper = FirebaseHelper.getInstance();
+        // Set context for SharedPreferences
+        firebaseHelper.setContext(requireContext().getApplicationContext());
         auth = FirebaseAuth.getInstance();
     }
     

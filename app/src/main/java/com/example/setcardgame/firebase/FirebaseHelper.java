@@ -1,5 +1,7 @@
 package com.example.setcardgame.firebase;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -26,10 +28,15 @@ import java.util.Map;
  */
 public class FirebaseHelper {
     private static final String TAG = "FirebaseHelper";
+    private static final String PREFS_NAME = "SetGamePrefs";
+    private static final String KEY_BEST_SCORE = "best_score";
+    private static final String KEY_USER_EMAIL = "user_email";
+    private static final String KEY_USER_NAME = "user_name";
     
     // Firebase instances
     private final FirebaseAuth mAuth;
     private final DatabaseReference mDatabase;
+    private Context mContext;
     
     // Singleton instance
     private static FirebaseHelper instance;
@@ -44,6 +51,13 @@ public class FirebaseHelper {
             instance = new FirebaseHelper();
         }
         return instance;
+    }
+    
+    /**
+     * Set the application context for shared preferences
+     */
+    public void setContext(Context context) {
+        mContext = context;
     }
     
     /**
@@ -103,6 +117,42 @@ public class FirebaseHelper {
     }
     
     /**
+     * Save user info to SharedPreferences
+     */
+    public void saveUserInfoToPrefs(String email, String name, int bestScore) {
+        if (mContext != null) {
+            SharedPreferences prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString(KEY_USER_EMAIL, email);
+            editor.putString(KEY_USER_NAME, name);
+            editor.putInt(KEY_BEST_SCORE, bestScore);
+            editor.apply();
+        }
+    }
+    
+    /**
+     * Get user's best score from SharedPreferences
+     */
+    public int getBestScoreFromPrefs() {
+        if (mContext != null) {
+            SharedPreferences prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            return prefs.getInt(KEY_BEST_SCORE, 0);
+        }
+        return 0;
+    }
+    
+    /**
+     * Get user name from SharedPreferences
+     */
+    public String getUserNameFromPrefs() {
+        if (mContext != null) {
+            SharedPreferences prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            return prefs.getString(KEY_USER_NAME, "Guest");
+        }
+        return "Guest";
+    }
+    
+    /**
      * Debug method to check Firebase database connection
      */
     public void debugDatabaseConnection() {
@@ -150,65 +200,54 @@ public class FirebaseHelper {
     }
     
     /**
-     * Force create the leaderboard node if it doesn't exist
+     * Safe check and create of leaderboard - will not overwrite existing data
      */
-    private void createLeaderboardIfNotExists() {
+    private void checkAndCreateLeaderboardIfNeeded() {
         try {
-            // First check if the leaderboard exists before attempting to create it
             mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     if (!dataSnapshot.exists()) {
-                        // Only create if it doesn't exist
-                        Log.d(TAG, "Leaderboard doesn't exist, creating it");
+                        Log.d(TAG, "Leaderboard does not exist. Creating it now...");
+                        // Create the leaderboard node with an initial empty object
                         mDatabase.child("leaderboard").setValue(new HashMap<>())
                             .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Leaderboard node created");
+                                Log.d(TAG, "Created new leaderboard node");
+                                // Only add dummy data if the node is completely new
+                                addInitialDummyData();
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Failed to create leaderboard node", e);
                             });
                     } else {
-                        Log.d(TAG, "Leaderboard already exists, preserving data");
+                        Log.d(TAG, "Leaderboard exists with " + dataSnapshot.getChildrenCount() + " entries");
                     }
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-                    Log.e(TAG, "Error checking leaderboard existence", error.toException());
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.w(TAG, "checkAndCreateLeaderboardIfNeeded:onCancelled", databaseError.toException());
                 }
             });
         } catch (Exception e) {
-            Log.e(TAG, "Error creating leaderboard node", e);
+            Log.e(TAG, "Error in checkAndCreateLeaderboardIfNeeded", e);
         }
     }
     
     /**
-     * Add test data to the leaderboard
+     * Add initial dummy data to a completely new leaderboard
      */
-    private void addTestData() {
+    private void addInitialDummyData() {
         try {
-            // Generate a unique key for this score entry
-            String scoreKey = mDatabase.child("leaderboard").push().getKey();
-            
-            if (scoreKey != null) {
-                Map<String, Object> testData = new HashMap<>();
-                testData.put("playerName", "Test Player");
-                testData.put("score", 10);
-                testData.put("timeInSeconds", 300);
-                testData.put("cardsFound", 10);
-                testData.put("timestamp", System.currentTimeMillis());
-                
-                mDatabase.child("leaderboard").child(scoreKey).setValue(testData)
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "Added test data successfully");
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Failed to add test data", e);
-                    });
-            }
+            // Add 5 initial example records
+            addDummyScore("Champion Player", 15, 180, 15);
+            addDummyScore("Expert Player", 12, 240, 12);
+            addDummyScore("Advanced Player", 10, 300, 10);
+            addDummyScore("Intermediate Player", 8, 330, 8);
+            addDummyScore("Beginner Player", 5, 420, 5);
+            Log.d(TAG, "Added initial dummy data to new leaderboard");
         } catch (Exception e) {
-            Log.e(TAG, "Error adding test data", e);
+            Log.e(TAG, "Error adding initial dummy data", e);
         }
     }
     
@@ -235,12 +274,69 @@ public class FirebaseHelper {
             return false;
         }
     }
+
+    /**
+     * Get the user's best score
+     * @param callback Callback to receive the best score
+     */
+    public void getUserBestScore(final BestScoreCallback callback) {
+        FirebaseUser user = getCurrentUser();
+        if (user == null) {
+            // If not logged in, return the local best score from preferences
+            callback.onSuccess(getBestScoreFromPrefs());
+            return;
+        }
+        
+        // Query the user's scores, ordered by score, and get only the highest one
+        mDatabase.child("users").child(user.getUid()).child("scores")
+                .orderByChild("score")
+                .limitToLast(1) // Only get the highest score
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        int bestScore = 0;
+                        
+                        if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
+                            // Get the highest score
+                            for (DataSnapshot scoreSnapshot : dataSnapshot.getChildren()) {
+                                // There should only be one child, but iterate just in case
+                                Object scoreObj = scoreSnapshot.child("score").getValue();
+                                if (scoreObj != null) {
+                                    if (scoreObj instanceof Long) {
+                                        bestScore = ((Long) scoreObj).intValue();
+                                    } else if (scoreObj instanceof Integer) {
+                                        bestScore = (Integer) scoreObj;
+                                    } else if (scoreObj instanceof Double) {
+                                        bestScore = ((Double) scoreObj).intValue();
+                                    }
+                                }
+                                break; // Just take the first one, as it should be the highest
+                            }
+                        }
+                        
+                        // Save to preferences
+                        saveUserInfoToPrefs(user.getEmail(), user.getDisplayName(), bestScore);
+                        
+                        callback.onSuccess(bestScore);
+                    }
+                    
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        Log.w(TAG, "getUserBestScore:onCancelled", databaseError.toException());
+                        callback.onError(databaseError.getMessage());
+                    }
+                });
+    }
     
     /**
      * Submit a new score to the leaderboard
      */
     public void submitScore(String playerName, int score, long timeInSeconds, int cardsFound) {
         try {
+            // First, make sure the leaderboard exists without overwriting it
+            // We check first - only create if it does not exist
+            checkAndCreateLeaderboardIfNeeded();
+            
             // Create score data
             Map<String, Object> scoreData = new HashMap<>();
             
@@ -249,6 +345,11 @@ public class FirebaseHelper {
             if (user != null) {
                 scoreData.put("userId", user.getUid());
                 scoreData.put("email", user.getEmail());
+                
+                // Update local best score if needed
+                if (score > getBestScoreFromPrefs()) {
+                    saveUserInfoToPrefs(user.getEmail(), user.getDisplayName(), score);
+                }
             }
             
             scoreData.put("playerName", playerName);
@@ -286,97 +387,6 @@ public class FirebaseHelper {
     }
     
     /**
-     * Ensure the leaderboard node exists in Firebase
-     */
-    public void ensureLeaderboardExists() {
-        if (isInitializing) {
-            Log.d(TAG, "Leaderboard initialization already in progress");
-            return;
-        }
-        
-        if (isInitialized) {
-            Log.d(TAG, "Leaderboard already initialized");
-            return;
-        }
-        
-        isInitializing = true;
-        Log.d(TAG, "Checking if leaderboard exists in Firebase...");
-        
-        try {
-            mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    if (!dataSnapshot.exists()) {
-                        Log.d(TAG, "Leaderboard does not exist. Creating it now...");
-                        // Create the leaderboard node with an initial empty object
-                        mDatabase.child("leaderboard").setValue(new HashMap<>())
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Created leaderboard node in Firebase successfully");
-                                // Add dummy data ONLY if there is none
-                                addDummyDataIfNeeded();
-                                isInitialized = true;
-                                isInitializing = false;
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to create leaderboard node", e);
-                                isInitializing = false;
-                            });
-                    } else {
-                        // Leaderboard already exists - DO NOT modify it
-                        Log.d(TAG, "Leaderboard already exists in Firebase with " + 
-                              dataSnapshot.getChildrenCount() + " entries");
-                        isInitialized = true;
-                        isInitializing = false;
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    Log.w(TAG, "ensureLeaderboardExists:onCancelled", databaseError.toException());
-                    isInitializing = false;
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error checking for leaderboard", e);
-            isInitializing = false;
-        }
-    }
-
-    /**
-     * Add dummy data to the leaderboard if it's empty
-     * This should only be called when creating a new leaderboard
-     */
-    private void addDummyDataIfNeeded() {
-        try {
-            mDatabase.child("leaderboard").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    // Only add dummy data if the leaderboard is completely empty
-                    if (!dataSnapshot.exists() || !dataSnapshot.hasChildren()) {
-                        Log.d(TAG, "Adding initial dummy data to empty leaderboard");
-                        // Add dummy high scores
-                        addDummyScore("Champion Player", 15, 180, 15);
-                        addDummyScore("Expert Player", 12, 240, 12);
-                        addDummyScore("Advanced Player", 10, 300, 10);
-                        addDummyScore("Intermediate Player", 8, 330, 8);
-                        addDummyScore("Beginner Player", 5, 420, 5);
-                    } else {
-                        Log.d(TAG, "Leaderboard already has " + dataSnapshot.getChildrenCount() + 
-                                  " entries, not adding dummy data");
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    Log.w(TAG, "addDummyDataIfNeeded:onCancelled", databaseError.toException());
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error adding dummy data", e);
-        }
-    }
-    
-    /**
      * Add a dummy score to the leaderboard
      */
     private void addDummyScore(String playerName, int score, long timeInSeconds, int cardsFound) {
@@ -407,10 +417,8 @@ public class FirebaseHelper {
             // Debug the database reference
             Log.d(TAG, "Database reference: " + mDatabase.toString());
             
-            // Only check if leaderboard exists - don't modify existing data
-            if (!isInitialized) {
-                ensureLeaderboardExists();
-            }
+            // IMPORTANT: We no longer call ensureLeaderboardExists() here to avoid potential data loss
+            // Instead, we just make sure we can read from the leaderboard
             
             Query query = mDatabase.child("leaderboard")
                     .orderByChild("score")
@@ -536,6 +544,14 @@ public class FirebaseHelper {
      */
     public interface UserProfileCallback {
         void onSuccess();
+        void onError(String errorMessage);
+    }
+    
+    /**
+     * Interface for best score callback
+     */
+    public interface BestScoreCallback {
+        void onSuccess(int bestScore);
         void onError(String errorMessage);
     }
 }

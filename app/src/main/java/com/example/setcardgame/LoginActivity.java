@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.setcardgame.firebase.FirebaseHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -43,6 +44,7 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
     private FirebaseFirestore mFirestore;
+    private FirebaseHelper mFirebaseHelper;
     
     private SignInButton signInButton;
     private Button btnPlayAsGuest;
@@ -60,6 +62,10 @@ public class LoginActivity extends AppCompatActivity {
         
         // Initialize Firestore
         mFirestore = FirebaseFirestore.getInstance();
+        
+        // Initialize FirebaseHelper
+        mFirebaseHelper = FirebaseHelper.getInstance();
+        mFirebaseHelper.setContext(getApplicationContext());
         
         // Configure Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -170,6 +176,13 @@ public class LoginActivity extends AppCompatActivity {
                         // Check if this is a new user
                         if (task.getResult().getAdditionalUserInfo().isNewUser()) {
                             createUserDocument(user);
+                        }
+                        
+                        // Save user info to SharedPreferences
+                        if (user != null) {
+                            String name = user.getDisplayName();
+                            String email = user.getEmail();
+                            mFirebaseHelper.saveUserInfoToPrefs(email, name, 0);
                         }
                         
                         updateUI(user);
