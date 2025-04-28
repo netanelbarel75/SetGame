@@ -24,6 +24,12 @@
             android:name="com.example.setcardgame.MainActivity"
             android:exported="false" />
             
+        <!-- Background music service -->
+        <service
+            android:name="com.example.setcardgame.service.BackgroundMusicService"
+            android:enabled="true"
+            android:exported="false" />
+            
     </application>
 
 </manifest>

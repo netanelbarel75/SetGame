@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.setcardgame.firebase.FirebaseHelper;
+import com.example.setcardgame.service.MusicManager;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -54,6 +55,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         
+        // Initialize background music service
+        initializeBackgroundMusic();
+        
         // Debug: Print the SHA-1 hash to help with debugging Google Sign-In issues
         printKeyHash();
         
@@ -85,6 +89,16 @@ public class LoginActivity extends AppCompatActivity {
     }
     
     /**
+     * Initialize background music service
+     */
+    private void initializeBackgroundMusic() {
+        Log.d(TAG, "Initializing background music...");
+        MusicManager musicManager = MusicManager.getInstance();
+        musicManager.init(this);
+        musicManager.startMusic();
+    }
+    
+    /**
      * Prints the SHA-1 fingerprint of the app's signing certificate to help with Google Sign-In debugging
      */
     private void printKeyHash() {
@@ -111,6 +125,22 @@ public class LoginActivity extends AppCompatActivity {
         if (currentUser != null) {
             updateUI(currentUser);
         }
+        
+        // Ensure music is playing
+        MusicManager.getInstance().startMusic();
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Resume background music when activity comes to foreground
+        MusicManager.getInstance().startMusic();
+    }
+    
+    @Override
+    protected void onPause() {
+        // Don't pause music when activity is in background
+        super.onPause();
     }
     
     private void signIn() {

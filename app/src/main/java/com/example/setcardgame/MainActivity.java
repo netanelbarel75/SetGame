@@ -9,6 +9,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.setcardgame.firebase.FirebaseHelper;
+import com.example.setcardgame.service.MusicManager;
 
 public class MainActivity extends AppCompatActivity implements 
         MenuFragment.MenuFragmentListener,
@@ -25,10 +26,23 @@ public class MainActivity extends AppCompatActivity implements
         // Ensure leaderboard exists in Firebase when app starts
         initializeFirebase();
         
+        // Initialize and start background music
+        initializeBackgroundMusic();
+        
         if (savedInstanceState == null) {
             // Load the menu fragment initially
             loadFragment(new MenuFragment());
         }
+    }
+    
+    /**
+     * Initialize background music service
+     */
+    private void initializeBackgroundMusic() {
+        Log.d(TAG, "Initializing background music...");
+        MusicManager musicManager = MusicManager.getInstance();
+        musicManager.init(this);
+        musicManager.startMusic();
     }
     
     /**
@@ -67,6 +81,8 @@ public class MainActivity extends AppCompatActivity implements
     
     @Override
     public void onPlayGameClicked() {
+        // Ensure music is playing when starting a game
+        MusicManager.getInstance().startMusic();
         loadFragment(new GameFragment());
     }
     
@@ -92,5 +108,25 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onBackToMenuClicked() {
         loadFragment(new MenuFragment());
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Resume background music when activity comes to foreground
+        MusicManager.getInstance().startMusic();
+    }
+    
+    @Override
+    protected void onPause() {
+        // Don't pause the music when activity is in background - let it continue playing
+        super.onPause();
+    }
+    
+    @Override
+    protected void onDestroy() {
+        // Disconnect from music service when activity is destroyed
+        MusicManager.getInstance().disconnectFromService();
+        super.onDestroy();
     }
 }
