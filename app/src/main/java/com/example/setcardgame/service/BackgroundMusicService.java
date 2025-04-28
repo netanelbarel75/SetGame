@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -60,14 +61,28 @@ public class BackgroundMusicService extends Service {
                     .setUsage(AudioAttributes.USAGE_GAME)
                     .build());
             
-            // Set the audio file from resources (you'll need to add this file)
+            // Set up error listener first so we can catch any initialization errors
+            mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                Log.e(TAG, "Media player error: " + what + ", " + extra);
+                isPrepared = false;
+                return false;
+            });
+            
+            // Set the audio file from resources using AssetFileDescriptor for proper resource handling
+            AssetFileDescriptor afd = null;
             try {
-                // Use a method that's compatible with API level 23
-                mediaPlayer.setDataSource(getResources().openRawResourceFd(R.raw.background_music).getFileDescriptor());
+                afd = getResources().openRawResourceFd(R.raw.background_music);
+                if (afd == null) {
+                    Log.e(TAG, "Failed to open resource");
+                    return;
+                }
+                
+                // Use the more complete setDataSource method with offset and length
+                mediaPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
                 mediaPlayer.setLooping(true);
                 mediaPlayer.setVolume(0.5f, 0.5f);
                 
-                mediaPlayer.prepareAsync();
+                // Set prepare listener before calling prepareAsync
                 mediaPlayer.setOnPreparedListener(mp -> {
                     isPrepared = true;
                     Log.d(TAG, "Media player prepared");
@@ -77,14 +92,20 @@ public class BackgroundMusicService extends Service {
                     }
                 });
                 
-                mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-                    Log.e(TAG, "Media player error: " + what + ", " + extra);
-                    isPrepared = false;
-                    return false;
-                });
+                // Start async preparation
+                mediaPlayer.prepareAsync();
             } catch (Exception e) {
                 Log.e(TAG, "Error setting data source: " + e.getMessage(), e);
                 releaseMediaPlayer();
+            } finally {
+                // Always close the file descriptor
+                if (afd != null) {
+                    try {
+                        afd.close();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error closing file descriptor", e);
+                    }
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Error initializing media player: " + e.getMessage(), e);
@@ -97,8 +118,17 @@ public class BackgroundMusicService extends Service {
      */
     public void startMusic() {
         if (mediaPlayer != null && isPrepared && !mediaPlayer.isPlaying() && isMusicEnabled) {
-            mediaPlayer.start();
-            Log.d(TAG, "Music started");
+            try {
+                mediaPlayer.start();
+                Log.d(TAG, "Music started");
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "Failed to start music, reinitializing player", e);
+                initializeMediaPlayer();
+            }
+        } else if (mediaPlayer == null || !isPrepared) {
+            // Try to reinitialize if the player isn't ready
+            Log.d(TAG, "MediaPlayer not ready, reinitializing");
+            initializeMediaPlayer();
         }
     }
     
@@ -107,8 +137,12 @@ public class BackgroundMusicService extends Service {
      */
     public void pauseMusic() {
         if (mediaPlayer != null && isPrepared && mediaPlayer.isPlaying()) {
-            mediaPlayer.pause();
-            Log.d(TAG, "Music paused");
+            try {
+                mediaPlayer.pause();
+                Log.d(TAG, "Music paused");
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "Error pausing music", e);
+            }
         }
     }
     
@@ -125,13 +159,22 @@ public class BackgroundMusicService extends Service {
         prefs.edit().putBoolean(KEY_MUSIC_ENABLED, enabled).apply();
         
         if (mediaPlayer != null && isPrepared) {
-            if (enabled && !mediaPlayer.isPlaying()) {
-                mediaPlayer.start();
-                Log.d(TAG, "Music started after enabling");
-            } else if (!enabled && mediaPlayer.isPlaying()) {
-                mediaPlayer.pause();
-                Log.d(TAG, "Music paused after disabling");
+            try {
+                if (enabled && !mediaPlayer.isPlaying()) {
+                    mediaPlayer.start();
+                    Log.d(TAG, "Music started after enabling");
+                } else if (!enabled && mediaPlayer.isPlaying()) {
+                    mediaPlayer.pause();
+                    Log.d(TAG, "Music paused after disabling");
+                }
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "Error changing music state", e);
+                // Try to reinitialize the player
+                initializeMediaPlayer();
             }
+        } else if (enabled) {
+            // Try to initialize the player if it's not ready and music should be on
+            initializeMediaPlayer();
         }
     }
     
@@ -148,18 +191,28 @@ public class BackgroundMusicService extends Service {
      * @return True if music is playing, false otherwise
      */
     public boolean isPlaying() {
-        return mediaPlayer != null && mediaPlayer.isPlaying();
+        try {
+            return mediaPlayer != null && mediaPlayer.isPlaying();
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Error checking if music is playing", e);
+            return false;
+        }
     }
     
     private void releaseMediaPlayer() {
         if (mediaPlayer != null) {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.stop();
+            try {
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.stop();
+                }
+                mediaPlayer.release();
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "Error releasing media player", e);
+            } finally {
+                mediaPlayer = null;
+                isPrepared = false;
+                Log.d(TAG, "Media player released");
             }
-            mediaPlayer.release();
-            mediaPlayer = null;
-            isPrepared = false;
-            Log.d(TAG, "Media player released");
         }
     }
     

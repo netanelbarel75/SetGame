@@ -13,15 +13,12 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.setcardgame.firebase.FirebaseHelper;
-import com.example.setcardgame.service.MusicManager;
 
 public class MenuFragment extends Fragment {
     
     private MenuFragmentListener listener;
     private TextView tvBestScore;
-    private Button btnToggleMusic;
     private FirebaseHelper firebaseHelper;
-    private MusicManager musicManager;
     
     public interface MenuFragmentListener {
         void onPlayGameClicked();
@@ -33,7 +30,6 @@ public class MenuFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         firebaseHelper = FirebaseHelper.getInstance();
-        musicManager = MusicManager.getInstance();
     }
     
     @Override
@@ -54,7 +50,6 @@ public class MenuFragment extends Fragment {
         Button btnPlay = view.findViewById(R.id.btnPlay);
         Button btnLeaderboard = view.findViewById(R.id.btnLeaderboard);
         Button btnRules = view.findViewById(R.id.btnRules);
-        btnToggleMusic = view.findViewById(R.id.btnToggleMusic);
         tvBestScore = view.findViewById(R.id.tvBestScore);
         
         // Update the best score
@@ -78,10 +73,6 @@ public class MenuFragment extends Fragment {
             }
         });
         
-        // Set up music toggle button
-        updateMusicToggleButton();
-        btnToggleMusic.setOnClickListener(v -> toggleMusic());
-        
         return view;
     }
     
@@ -90,9 +81,6 @@ public class MenuFragment extends Fragment {
         super.onResume();
         // Update the best score when resuming to ensure it's current
         updateBestScore();
-        
-        // Make sure music toggle button reflects current state
-        updateMusicToggleButton();
     }
     
     private void updateBestScore() {
@@ -125,24 +113,6 @@ public class MenuFragment extends Fragment {
                 int bestScore = firebaseHelper.getBestScoreFromPrefs();
                 tvBestScore.setText("Best Score: " + bestScore);
             }
-        }
-    }
-    
-    /**
-     * Toggle background music on/off
-     */
-    private void toggleMusic() {
-        boolean newState = musicManager.toggleMusic();
-        updateMusicToggleButton();
-    }
-    
-    /**
-     * Update the music toggle button text based on current state
-     */
-    private void updateMusicToggleButton() {
-        if (btnToggleMusic != null) {
-            boolean isMusicEnabled = musicManager.isMusicEnabled();
-            btnToggleMusic.setText(isMusicEnabled ? "Music: On" : "Music: Off");
         }
     }
     

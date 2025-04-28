@@ -1,11 +1,13 @@
 package com.example.setcardgame;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.example.setcardgame.firebase.FirebaseHelper;
@@ -17,11 +19,23 @@ public class MainActivity extends AppCompatActivity implements
         LeaderboardFragment.LeaderboardFragmentListener {
 
     private static final String TAG = "MainActivity";
+    private ImageButton btnToggleMusic;
+    private MusicManager musicManager;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        
+        // Set up toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        
+        // Set up music toggle button
+        btnToggleMusic = findViewById(R.id.btnToggleMusic);
+        musicManager = MusicManager.getInstance();
+        updateMusicToggleIcon();
+        btnToggleMusic.setOnClickListener(v -> toggleMusic());
         
         // Ensure leaderboard exists in Firebase when app starts
         initializeFirebase();
@@ -36,11 +50,29 @@ public class MainActivity extends AppCompatActivity implements
     }
     
     /**
+     * Toggle background music on/off
+     */
+    private void toggleMusic() {
+        boolean newState = musicManager.toggleMusic();
+        updateMusicToggleIcon();
+    }
+    
+    /**
+     * Update the music toggle button icon based on current state
+     */
+    private void updateMusicToggleIcon() {
+        if (btnToggleMusic != null) {
+            boolean isMusicEnabled = musicManager.isMusicEnabled();
+            btnToggleMusic.setImageResource(isMusicEnabled ? 
+                R.drawable.ic_music_on : R.drawable.ic_music_off);
+        }
+    }
+    
+    /**
      * Initialize background music service
      */
     private void initializeBackgroundMusic() {
         Log.d(TAG, "Initializing background music...");
-        MusicManager musicManager = MusicManager.getInstance();
         musicManager.init(this);
         musicManager.startMusic();
     }
@@ -82,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onPlayGameClicked() {
         // Ensure music is playing when starting a game
-        MusicManager.getInstance().startMusic();
+        musicManager.startMusic();
         loadFragment(new GameFragment());
     }
     
@@ -114,7 +146,10 @@ public class MainActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
         // Resume background music when activity comes to foreground
-        MusicManager.getInstance().startMusic();
+        musicManager.startMusic();
+        
+        // Update music icon to reflect current state
+        updateMusicToggleIcon();
     }
     
     @Override
@@ -126,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onDestroy() {
         // Disconnect from music service when activity is destroyed
-        MusicManager.getInstance().disconnectFromService();
+        musicManager.disconnectFromService();
         super.onDestroy();
     }
 }

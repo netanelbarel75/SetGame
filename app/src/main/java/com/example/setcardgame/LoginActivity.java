@@ -1,6 +1,9 @@
 package com.example.setcardgame;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -9,11 +12,13 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.example.setcardgame.firebase.FirebaseHelper;
 import com.example.setcardgame.service.MusicManager;
@@ -21,6 +26,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -49,11 +55,26 @@ public class LoginActivity extends AppCompatActivity {
     
     private SignInButton signInButton;
     private Button btnPlayAsGuest;
+    private ImageButton btnToggleMusic;
+    private MusicManager musicManager;
     
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        
+        // Set up toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(""); // Remove title from toolbar
+        }
+        
+        // Set up music toggle button
+        btnToggleMusic = findViewById(R.id.btnToggleMusic);
+        musicManager = MusicManager.getInstance();
+        updateMusicToggleIcon();
+        btnToggleMusic.setOnClickListener(v -> toggleMusic());
         
         // Initialize background music service
         initializeBackgroundMusic();
@@ -89,11 +110,29 @@ public class LoginActivity extends AppCompatActivity {
     }
     
     /**
+     * Toggle background music on/off
+     */
+    private void toggleMusic() {
+        boolean newState = musicManager.toggleMusic();
+        updateMusicToggleIcon();
+    }
+    
+    /**
+     * Update the music toggle button icon based on current state
+     */
+    private void updateMusicToggleIcon() {
+        if (btnToggleMusic != null) {
+            boolean isMusicEnabled = musicManager.isMusicEnabled();
+            btnToggleMusic.setImageResource(isMusicEnabled ? 
+                R.drawable.ic_music_on : R.drawable.ic_music_off);
+        }
+    }
+    
+    /**
      * Initialize background music service
      */
     private void initializeBackgroundMusic() {
         Log.d(TAG, "Initializing background music...");
-        MusicManager musicManager = MusicManager.getInstance();
         musicManager.init(this);
         musicManager.startMusic();
     }
@@ -127,14 +166,17 @@ public class LoginActivity extends AppCompatActivity {
         }
         
         // Ensure music is playing
-        MusicManager.getInstance().startMusic();
+        musicManager.startMusic();
     }
     
     @Override
     protected void onResume() {
         super.onResume();
         // Resume background music when activity comes to foreground
-        MusicManager.getInstance().startMusic();
+        musicManager.startMusic();
+        
+        // Update music icon to reflect current state
+        updateMusicToggleIcon();
     }
     
     @Override
@@ -144,8 +186,28 @@ public class LoginActivity extends AppCompatActivity {
     }
     
     private void signIn() {
+        // Check for network connectivity first
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "No internet connection. Please connect to the internet or play as a guest.", Toast.LENGTH_LONG).show();
+            btnPlayAsGuest.setText("Play Offline");
+            return;
+        }
+        
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+    
+    /**
+     * Check if the device has an active network connection
+     * @return true if network is available, false otherwise
+     */
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        }
+        return false;
     }
     
     private void playAsGuest() {
@@ -173,20 +235,29 @@ public class LoginActivity extends AppCompatActivity {
                 // Provide more helpful error messages based on error code
                 String errorMessage;
                 switch (e.getStatusCode()) {
+                    case GoogleSignInStatusCodes.SIGN_IN_CANCELLED:
+                        errorMessage = "Sign-in was cancelled.";
+                        break;
+                    case GoogleSignInStatusCodes.SIGN_IN_CURRENTLY_IN_PROGRESS:
+                        errorMessage = "Sign-in already in progress.";
+                        break;
+                    case GoogleSignInStatusCodes.SIGN_IN_FAILED:
+                        errorMessage = "Sign-in failed. Please try again.";
+                        break;
+                    case GoogleSignInStatusCodes.NETWORK_ERROR:
+                        errorMessage = "Network error. Please check your internet connection and try again.";
+                        break;
                     case 10: // DEVELOPER_ERROR
                         errorMessage = "Sign-in configuration error. Please contact app developer.";
                         break;
-                    case 12500: // SIGN_IN_CANCELLED
-                        errorMessage = "Sign-in was cancelled.";
-                        break;
-                    case 12501: // SIGN_IN_FAILED
-                        errorMessage = "Sign-in failed. Please try again.";
-                        break;
-                    case 12502: // SIGN_IN_CURRENTLY_IN_PROGRESS
-                        errorMessage = "Sign-in already in progress.";
-                        break;
                     default:
                         errorMessage = "Google sign-in failed: " + e.getMessage();
+                }
+                
+                // Show the guest button more prominently if there's a network error
+                if (e.getStatusCode() == GoogleSignInStatusCodes.NETWORK_ERROR) {
+                    btnPlayAsGuest.setText("Play Offline");
+                    // You could also make the button more visible by changing its appearance
                 }
                 
                 Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
