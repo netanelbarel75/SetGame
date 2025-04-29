@@ -73,11 +73,15 @@ public class LoginActivity extends AppCompatActivity {
         // Set up music toggle button
         btnToggleMusic = findViewById(R.id.btnToggleMusic);
         musicManager = MusicManager.getInstance();
-        updateMusicToggleIcon();
+        
+        // Initialize background music service first
+        initializeBackgroundMusic();
+        
+        // Then set up button click handler
         btnToggleMusic.setOnClickListener(v -> toggleMusic());
         
-        // Initialize background music service
-        initializeBackgroundMusic();
+        // Set initial icon - default to ON since we're starting the music
+        btnToggleMusic.setImageResource(R.drawable.ic_music_on);
         
         // Debug: Print the SHA-1 hash to help with debugging Google Sign-In issues
         printKeyHash();
@@ -122,9 +126,13 @@ public class LoginActivity extends AppCompatActivity {
      */
     private void updateMusicToggleIcon() {
         if (btnToggleMusic != null) {
-            boolean isMusicEnabled = musicManager.isMusicEnabled();
-            btnToggleMusic.setImageResource(isMusicEnabled ? 
+            // Make sure the icon reflects the actual state (both enabled and playing)
+            boolean isMusicOn = musicManager.isMusicEnabled();
+            btnToggleMusic.setImageResource(isMusicOn ? 
                 R.drawable.ic_music_on : R.drawable.ic_music_off);
+            
+            // Log the current state for debugging
+            Log.d(TAG, "Music enabled: " + isMusicOn);
         }
     }
     

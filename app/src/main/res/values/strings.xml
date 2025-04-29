@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Set Card Game</string>
     <string name="app_slogan">Find the patterns, make the sets!</string>
-    <string name="app_credits">Created by Your Name</string>
+    <string name="app_credits">Created by Yali Berkovich</string>
     <string name="app_logo">App Logo</string>
     <string name="play_as_guest">Play as Guest</string>
     <string name="sign_in_with_google">Sign in with Google</string>
@@ -19,7 +19,7 @@
     <string name="cards_remaining">Cards: %1$d</string>
     <string name="time">Time: %1$s</string>
     <string name="submit_score">Submit Score</string>
-    <string name="enter_your_name">Enter your name</string>
+    <string name="enter_your_name">Yali Berkovich</string>
     <string name="guest_player">Guest Player</string>
     <string name="error_loading_leaderboard">Error loading leaderboard</string>
     <string name="congratulations">Congratulations!</string>

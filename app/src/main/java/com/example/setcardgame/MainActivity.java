@@ -34,14 +34,18 @@ public class MainActivity extends AppCompatActivity implements
         // Set up music toggle button
         btnToggleMusic = findViewById(R.id.btnToggleMusic);
         musicManager = MusicManager.getInstance();
-        updateMusicToggleIcon();
+        
+        // Initialize and start background music first
+        initializeBackgroundMusic();
+        
+        // Then set up button click handler
         btnToggleMusic.setOnClickListener(v -> toggleMusic());
+        
+        // Set initial icon - default to ON since we're starting the music
+        btnToggleMusic.setImageResource(R.drawable.ic_music_on);
         
         // Ensure leaderboard exists in Firebase when app starts
         initializeFirebase();
-        
-        // Initialize and start background music
-        initializeBackgroundMusic();
         
         if (savedInstanceState == null) {
             // Load the menu fragment initially

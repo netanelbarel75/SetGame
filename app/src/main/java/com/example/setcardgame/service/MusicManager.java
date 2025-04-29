@@ -19,6 +19,7 @@ public class MusicManager {
     private BackgroundMusicService musicService;
     private boolean isServiceBound = false;
     private Context applicationContext;
+    private boolean pendingMusicEnabled = true; // Default music to be on
     
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -27,6 +28,12 @@ public class MusicManager {
             musicService = binder.getService();
             isServiceBound = true;
             Log.d(TAG, "Service connected");
+            
+            // Apply any pending music state once connected
+            musicService.setMusicEnabled(pendingMusicEnabled);
+            if (pendingMusicEnabled) {
+                musicService.startMusic();
+            }
         }
         
         @Override
@@ -112,22 +119,28 @@ public class MusicManager {
      * @param enabled True to enable music, false to disable
      */
     public void setMusicEnabled(boolean enabled) {
+        // Always update pending state
+        pendingMusicEnabled = enabled;
+        Log.d(TAG, "Music enabled set to: " + enabled + " (pending: " + !isServiceBound + ")");
+        
         if (isServiceBound && musicService != null) {
             musicService.setMusicEnabled(enabled);
         } else {
-            Log.d(TAG, "Cannot set music enabled - service not bound");
+            Log.d(TAG, "Cannot set music enabled - service not bound, will apply when connected");
+            // Will be applied when service connects
         }
     }
     
     /**
      * Check if background music is currently enabled
-     * @return True if music is enabled, false otherwise or if service is not bound
+     * @return True if music is enabled, false otherwise
      */
     public boolean isMusicEnabled() {
         if (isServiceBound && musicService != null) {
             return musicService.isMusicEnabled();
         }
-        return false;
+        // Use the pending state if service not yet bound
+        return pendingMusicEnabled;
     }
     
     /**
